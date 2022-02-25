@@ -1,0 +1,55 @@
+<html>
+
+<head> 
+  <title>CS426: Resources</title>
+  <base href="http://www.cs.uiuc.edu/class/cs426/Project/cool-examples">
+</head>
+
+<body   bgcolor="#F9F9F9">
+<!--    
+        text   ="#004898"
+        link   ="#004438"
+        vlink  ="#991144"
+-->
+
+
+<center>
+<!-- 
+<a href="http://www.uiuc.edu" target=_parent><img src="images/running.bar.gif"> 
+</a>
+-->
+<h1>
+<font size=+3 color="#990044">
+CS 426 
+</font> 
+</h1>
+
+<h2>Fall 2005</h2>
+</center>
+
+<hr>
+
+<p>
+Files in this directory include:
+<p>
+<ul>
+<li><a href="README">README</a>
+<li><a href="arith.cl">arith.cl</a>
+<li><a href="atoi.cl">atoi.cl</a>
+<li><a href="atoi_test.cl">atoi_test.cl</a>
+<li><a href="book_list.cl">book_list.cl</a>
+<li><a href="cells.cl">cells.cl</a>
+<li><a href="complex.cl">complex.cl</a>
+<li><a href="cool.cl">cool.cl</a>
+<li><a href="graph.cl">graph.cl</a>
+<li><a href="hairyscary.cl">hairyscary.cl</a>
+<li><a href="hello_world.cl">hello_world.cl</a>
+<li><a href="io.cl">io.cl</a>
+<li><a href="lam.cl">lam.cl</a>
+<li><a href="life.cl">life.cl</a>
+<li><a href="list.cl">list.cl</a>
+<li><a href="new_complex.cl">new_complex.cl</a>
+<li><a href="palindrome.cl">palindrome.cl</a>
+<li><a href="primes.cl">primes.cl</a>
+<li><a href="sort_list.cl">sort_list.cl</a>
+</ul>
