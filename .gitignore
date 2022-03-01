@@ -1,2 +1,4 @@
 Lecture
 Lab
+*.cc
+*.o
