@@ -101,6 +101,19 @@ LE		      ("<=")
 
 /* def: Token   (End) */
 
+
+/* def: Delimiter (Begin) */
+
+COMMENT_BEGIN 	("(*")
+COMMENT_END 	("*)")
+
+LINE_COMMENT	(--(.)*)
+STR_DELIM		("\"")
+
+/* def: Delimiter   (End) */
+
+NO_MATCH	.
+
 %%
 
  /*
