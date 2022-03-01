@@ -42,6 +42,13 @@ extern YYSTYPE cool_yylval;
  *  Add Your own definitions here
  */
 
+
+/* def: Comment (Begin) */
+
+int comment_depth = 0;
+
+/* def: Comment   (End) */
+
 %}
 
 %option noyywrap
@@ -139,5 +146,86 @@ NO_MATCH  .
   *   - Line counting: You should keep the global variable curr_lineno updated
   *     with the correct line number
   */
+
+
+ /* def: Nested Comments (Begin) */
+
+{COMMENT_BEGIN} {
+  /*
+   * Nested Comments::Basic Rule
+   * Begin Comment
+   */
+  comment_depth++;
+  BEGIN(COMMENT);
+}
+
+<COMMENT>{COMMENT_BEGIN} {
+  /*
+   * Nested Comments::Basic Rule
+   * Begin Comment
+   */
+  comment_depth++;
+}
+
+{COMMENT_END} { 
+  /*
+   * Nested Comments::Basic Rule
+   * End Comment
+   */
+  cool_yylval.error_msg = "Unmatched *)";
+  return (ERROR);
+}
+
+<COMMENT>{COMMENT_END} { 
+  /*
+   * Nested Comments::Basic Rule
+   * End Comment
+   */
+  comment_depth--;
+
+  if(comment_depth == 0) {
+    BEGIN(INITIAL);
+  }
+}
+
+<COMMENT><<EOF>> {
+  /*
+   * Nested Comments::Exception
+   * EOF
+   */
+  
+  BEGIN(INITIAL); // Don't end lexer with comment block!
+  cool_yylval.error_msg = "EOF in comment";
+  return (ERROR);
+}
+
+<COMMENT>{NEWLINE} {
+  /*
+   * Nested Comments::Exception
+   * Line Feed
+   */
+  curr_lineno++;
+}
+
+<COMMENT>. {
+  /*
+   * Nested Comments::Pumping
+   * Pump for any char
+   */
+
+  // Pumping rule for comment block.
+
+}
+
+{LINE_COMMENT} {
+  /*
+   * Nested Comments::Exception
+   * Line Comment
+   */
+  
+  // Pumping rule for line comment.
+}
+
+ /* def: Nested Comments   (End) */
 
 %%
