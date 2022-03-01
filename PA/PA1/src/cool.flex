@@ -71,6 +71,36 @@ NEWLINE ({CR}{LF}|{CR}|{LF})
 
 /* def: Synonym   (End) */
 
+
+/* def: Token (Begin) */
+
+CLASS	  	  (?i:class)
+ELSE	  	  (?i:else)
+FI		      (?i:fi)
+IF		      (?i:if)
+IN		      (?i:in)
+INHERITS    (?i:inherits)
+LET		      (?i:let)
+LOOP	  	  (?i:loop)
+POOL	  	  (?i:pool)
+THEN	  	  (?i:then)
+WHILE	  	  (?i:while)
+CASE	  	  (?i:case)
+ESAC	  	  (?i:esac)
+OF	    	  (?i:of)
+DARROW      ("=>")
+NEW	    	  (?i:new)
+ISVOID		  (?i:isvoid)
+INT_CONST   ({DIGIT}+)
+BOOL_CONST  ({TRUE}|{FALSE})
+TYPEID      ({UPPER}{ID}*)
+OBJECTID    ({LOWER}{ID}*)
+ASSIGN		  ("<-")
+NOT	    	  (?i:not)
+LE		      ("<=")
+
+/* def: Token   (End) */
+
 %%
 
  /*
