@@ -46,6 +46,15 @@ extern YYSTYPE cool_yylval;
 
 %option noyywrap
 
+
+/* def: Block (Begin) */
+
+%x COMMENT
+%x STRING
+
+/* def: Block   (End) */
+
+
 /*
  * Define names for regular expressions here.
  */
