@@ -50,7 +50,26 @@ extern YYSTYPE cool_yylval;
  * Define names for regular expressions here.
  */
 
-digit       [0-9]
+/* def: Synonym (Begin) */
+
+CR (\r)
+LF (\n)
+
+TRUE  (t(?i:rue))
+FALSE	(f(?i:alse))
+
+WHITESPACE  (" "|"\f"|"\r"|"\t"|"\v")
+SYMBOLS		  ("("|")"|"*"|"+"|","|"-"|"."|"/"|":"|";"|"<"|"="|"@"|"{"|"}"|"~")
+
+DIGIT ([0-9])
+UPPER ([A-Z])
+LOWER ([a-z])
+
+LETTER  ({UPPER}|{LOWER})
+ID      ({LETTER}|{DIGIT}|_)
+NEWLINE ({CR}{LF}|{CR}|{LF})
+
+/* def: Synonym   (End) */
 
 %%
 
