@@ -128,7 +128,7 @@ STR_DELIM     ("\"")
 
 /* def: Delimiter   (End) */
 
-NO_MATCH  .
+SIGMA (.)
 
 %%
 
@@ -207,7 +207,7 @@ NO_MATCH  .
   curr_lineno++;
 }
 
-<COMMENT>. {
+<COMMENT>{SIGMA} {
   /*
    * Nested Comments::Pumping
    * Pump for any char
