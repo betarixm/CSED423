@@ -123,7 +123,8 @@ LE          ("<=")
 COMMENT_BEGIN ("(*")
 COMMENT_END   ("*)")
 
-LINE_COMMENT  (--(.)*)
+LINE_COMMENT_BEGIN  ("--")
+
 STR_DELIM     ("\"")
 
 /* def: Delimiter   (End) */
@@ -217,13 +218,13 @@ SIGMA (.)
 
 }
 
-{LINE_COMMENT} {
+{LINE_COMMENT_BEGIN}{SIGMA}* {
   /*
    * Nested Comments::Exception
    * Line Comment
    */
   
-  // Pumping rule for line comment.
+  // Catching rule for line comment.
 }
 
  /* def: Nested Comments   (End) */
