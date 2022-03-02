@@ -42,12 +42,33 @@ extern YYSTYPE cool_yylval;
  *  Add Your own definitions here
  */
 
+#define RED 31
+#define GREEN 32
+#define YELLOW 33
+#define BLUE 34
+#define MAGENTA 35
+#define CYAN 36
+#define WHITE 37
+#define RESET 0
 
 /* def: Comment (Begin) */
 
 int comment_depth = 0;
 
 /* def: Comment   (End) */
+
+
+/* def: Debug Purpose (Begin) */
+
+#define VERBOSE
+
+void verbose();
+
+void print(std::string str);
+
+std::string coloring(std::string str, int color);
+
+/* def: Debug Purpose   (End) */
 
 %}
 
@@ -230,3 +251,26 @@ SIGMA (.)
  /* def: Nested Comments   (End) */
 
 %%
+
+
+/* def: Debug Purpose (Begin) */
+
+void verbose() {
+#ifdef VERBOSE
+  std::cout << coloring("[*] DEBUG", RED) << std::endl;
+  std::cout << coloring("    - Input:         ", MAGENTA) << yytext << std::endl;
+  std::cout << coloring("    - Comment Depth: ", MAGENTA) << comment_depth << std::endl;
+#endif
+}
+
+void print(std::string str) {
+#ifdef VERBOSE
+  std::cout << coloring("[*] OUT: ", YELLOW) << str << std::endl;
+#endif
+}
+
+std::string coloring(std::string str, int color) {
+  return "\x1b[" + std::to_string(color) + "m" + str + "\x1b[" + std::to_string(RESET) + "m";
+}
+
+/* def: Debug Purpose   (End) */
