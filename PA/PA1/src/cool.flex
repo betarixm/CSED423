@@ -250,6 +250,98 @@ SIGMA (.)
 
  /* def: Nested Comments   (End) */
 
+
+ /* def: Keywords (Begin) */
+
+{CLASS} {
+  return (CLASS);
+}
+
+{ELSE} {
+  return (ELSE);
+}
+
+{FI} {
+  return (FI);
+}
+
+{IF} {
+  return (IF);
+}
+
+{IN} {
+  return (IN);
+}
+
+{INHERITS} {
+  return (INHERITS);
+}
+
+{LET} {
+  return (LET);
+}
+
+{LOOP} {
+  return (LOOP);
+}
+
+{POOL} {
+  return (POOL);
+}
+
+{THEN} {
+  return (THEN);
+}
+
+{WHILE} {
+  return (WHILE);
+}
+
+{CASE} {
+  return (CASE);
+}
+
+{ESAC} {
+  return (ESAC);
+}
+
+{OF} {
+  return (OF);
+}
+
+{NEW} {
+  return (NEW);
+}
+
+{ISVOID} {
+  return (ISVOID);
+}
+
+{TRUE} { 
+  cool_yylval.boolean = true;
+  return (BOOL_CONST);
+}
+
+{FALSE} {
+  cool_yylval.boolean = false;
+  return (BOOL_CONST);
+}
+
+{NOT} {
+  return (NOT);
+}
+
+{NEWLINE} {
+  ++curr_lineno;
+}
+
+{WHITESPACE} {
+   
+}
+
+ /* def: Keywords   (End) */
+
+
 %%
 
 
