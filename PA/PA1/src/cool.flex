@@ -258,8 +258,9 @@ SIGMA (.)
 void verbose() {
 #ifdef VERBOSE
   std::cout << coloring("[*] DEBUG", RED) << std::endl;
-  std::cout << coloring("    - Input:         ", MAGENTA) << yytext << std::endl;
-  std::cout << coloring("    - Comment Depth: ", MAGENTA) << comment_depth << std::endl;
+  std::cout << coloring("    - Input (yytext):  ", MAGENTA) << yytext << std::endl;
+  std::cout << coloring("    - Length (yyleng): ", MAGENTA) << yyleng << std::endl;
+  std::cout << coloring("    - Comment Depth:   ", MAGENTA) << comment_depth << std::endl;
 #endif
 }
 
