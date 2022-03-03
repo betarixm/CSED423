@@ -42,6 +42,12 @@ extern YYSTYPE cool_yylval;
  *  Add Your own definitions here
  */
 
+
+/* def: Constant (Begin) */
+
+#define TRUE 1
+#define FALSE 0
+
 #define RED 31
 #define GREEN 32
 #define YELLOW 33
@@ -50,6 +56,9 @@ extern YYSTYPE cool_yylval;
 #define CYAN 36
 #define WHITE 37
 #define RESET 0
+
+/* def: Constant   (End) */
+
 
 /* def: Comment (Begin) */
 
