@@ -60,6 +60,13 @@ extern YYSTYPE cool_yylval;
 /* def: Constant   (End) */
 
 
+/* def: Helper (Begin) */
+
+#define SET_ERROR_MSG(X) (cool_yylval.error_msg = X)
+
+/* def: Helper   (End) */
+
+
 /* def: Comment (Begin) */
 
 int comment_depth = 0;
