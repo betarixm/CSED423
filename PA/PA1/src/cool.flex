@@ -67,11 +67,45 @@ extern YYSTYPE cool_yylval;
 /* def: Helper   (End) */
 
 
+/* def: String (Begin) */
+
+#define APPEND_STRING_BUF_2(_1, _2) {\
+  if (append_string_buf(_1, _2) == -1) {\
+    string_buf_overflow_flag = TRUE;\
+  }\
+}
+
+#define APPEND_STRING_BUF_1(_1) {\
+  if (append_string_buf(_1) == -1) {\
+    string_buf_overflow_flag = TRUE;\
+  }\
+}
+
+#define GET_MACRO(_1, _2, NAME, ...) NAME
+
+#define APPEND_STRING_BUF(...) GET_MACRO(__VA_ARGS__, APPEND_STRING_BUF_2, APPEND_STRING_BUF_1)(__VA_ARGS__)
+
+/* def: String   (End) */
+
+
 /* def: Comment (Begin) */
 
 int comment_depth = 0;
 
 /* def: Comment   (End) */
+
+
+/* def: String (Begin) */
+
+char string_buf_overflow_flag = FALSE;
+
+void init_string_buf();
+
+int append_string_buf(std::string str);
+
+int append_string_buf(std::string str, int length);
+
+/* def: String   (End) */
 
 
 /* def: Debug Purpose (Begin) */
@@ -359,6 +393,36 @@ SIGMA (.)
 
 
 %%
+
+
+/* def: String (Begin) */
+
+void init_string_buf() {
+  string_buf[0] = '\0';
+  string_buf_ptr = string_buf;
+  string_buf_overflow_flag = FALSE;
+}
+
+int append_string_buf(std::string str) {
+  return append_string_buf(str, str.length());
+}
+
+int append_string_buf(std::string str, int length) {
+  int result_length = strlen(string_buf) + length;
+
+  if (result_length >= MAX_STR_CONST) {
+    return -1;  
+  }
+
+  strncat(string_buf, str.c_str(), length);
+
+  print("Current string_buf       : " + std::string(string_buf));
+  print("Current string_buf length: " + std::to_string(result_length));
+
+  return result_length;
+}
+
+/* def: String   (End) */
 
 
 /* def: Debug Purpose (Begin) */
