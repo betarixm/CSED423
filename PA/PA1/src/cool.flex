@@ -301,6 +301,74 @@ SIGMA (.)
  /* def: Nested Comments   (End) */
 
 
+ /* def: String constants (Begin) */
+
+{STR_DELIM} { 
+  BEGIN(STRING);
+  init_string_buf();
+}
+
+<STRING>{STR_DELIM}		{
+  BEGIN(INITIAL);
+
+  if(string_buf_overflow_flag){
+    SET_ERROR_MSG("String constant too long");
+
+    return (ERROR);
+  }
+
+  cool_yylval.symbol = stringtable.add_string(string_buf);
+
+  return (STR_CONST);
+}
+
+<STRING><<EOF>> {
+  BEGIN(INITIAL);
+  SET_ERROR_MSG("EOF in string");
+
+  return (ERROR);
+}
+
+<STRING>\0 {
+  BEGIN(INITIAL);
+  SET_ERROR_MSG("String contains null character");
+
+  return (ERROR);
+}
+
+<STRING>{NEWLINE}	{
+  BEGIN(INITIAL);
+  SET_ERROR_MSG("Unterminated string constant");
+
+  return (ERROR);
+}
+
+<STRING>\\[^\0\r]	{
+  char matched = yytext[1];
+  char text = '\0';
+
+  if (matched == 'b') {
+    text = '\b';
+  } else if (matched == 't') {
+    text = '\t';
+  } else if (matched == 'n') {
+    text = '\n';
+  } else if (matched == 'f') {
+    text = '\f';
+  } else {
+    text = matched;
+  }
+
+  APPEND_STRING_BUF(&text, 1);
+}
+
+<STRING>. {
+  APPEND_STRING_BUF(yytext);
+}
+
+ /* def: String constants   (End) */
+
+
  /* def: Keywords (Begin) */
 
 {CLASS} {
