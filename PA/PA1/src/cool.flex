@@ -110,7 +110,7 @@ int append_string_buf(std::string str, int length);
 
 /* def: Debug Purpose (Begin) */
 
-#define VERBOSE
+// #define VERBOSE
 
 void verbose();
 
