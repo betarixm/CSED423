@@ -327,8 +327,7 @@ SIGMA (.)
     return (ERROR);
   }
 
-  cool_yylval.symbol = stringtable.add_string(string_buf);
-
+  SET_SYMBOL(ADD_STRING__GET_ELEM(stringtable, string_buf));
   return (STR_CONST);
 }
 
@@ -502,17 +501,17 @@ SIGMA (.)
  /* def: Symbols (Begin) */
 
 {INT_CONST} {
-  cool_yylval.symbol = inttable.add_string(yytext, yyleng);
+  SET_SYMBOL(ADD_STRING__GET_ELEM(inttable, yytext, yyleng));
   return (INT_CONST);
 }
 
 {TYPEID} {
-  cool_yylval.symbol = idtable.add_string(yytext);
+  SET_SYMBOL(ADD_STRING__GET_ELEM(idtable, yytext, yyleng));
   return (TYPEID);
 }
 
 {OBJECTID} {
-  cool_yylval.symbol = idtable.add_string(yytext);
+  SET_SYMBOL(ADD_STRING__GET_ELEM(idtable, yytext, yyleng));
   return (OBJECTID);
 }
 
