@@ -244,7 +244,7 @@ SIGMA (.)
    * Nested Comments::Basic Rule
    * End Comment
    */
-  cool_yylval.error_msg = "Unmatched *)";
+  SET_ERROR_MSG("Unmatched *)");
   return (ERROR);
 }
 
@@ -267,7 +267,7 @@ SIGMA (.)
    */
   
   BEGIN(INITIAL); // Don't end lexer with comment block!
-  cool_yylval.error_msg = "EOF in comment";
+  SET_ERROR_MSG("EOF in comment");
   return (ERROR);
 }
 
@@ -512,7 +512,7 @@ SIGMA (.)
  /* def: Exception (Begin) */
 
 {SIGMA} {
-  cool_yylval.error_msg = yytext;
+  SET_ERROR_MSG(yytext);
   return (ERROR);    
 }
 
