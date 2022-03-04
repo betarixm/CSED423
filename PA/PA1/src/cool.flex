@@ -64,6 +64,16 @@ extern YYSTYPE cool_yylval;
 
 #define SET_ERROR_MSG(X) (cool_yylval.error_msg = X)
 
+#define SET_SYMBOL(X) (cool_yylval.symbol = X)
+
+#define ADD_STRING_1(TABLE, STR) (TABLE.add_string(STR))
+
+#define ADD_STRING_2(TABLE, STR, LEN) (TABLE.add_string(STR, LEN))
+
+#define GET_3D_MACRO(TABLE, STR, LEN, NAME, ...) NAME
+
+#define ADD_STRING__GET_ELEM(...) GET_3D_MACRO(__VA_ARGS__, ADD_STRING_2, ADD_STRING_1)(__VA_ARGS__)
+
 /* def: Helper   (End) */
 
 
