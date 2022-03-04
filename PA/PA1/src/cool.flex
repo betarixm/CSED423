@@ -449,7 +449,7 @@ SIGMA (.)
 
  /* def: Keywords   (End) */
 
- 
+
  /* def: Control Characters (Begin) */
 
 {NEWLINE} {
