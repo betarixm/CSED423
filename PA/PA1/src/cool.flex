@@ -509,6 +509,16 @@ SIGMA (.)
  /* def: Symbols   (End) */
 
 
+ /* def: Exception (Begin) */
+
+{SIGMA} {
+  cool_yylval.error_msg = yytext;
+  return (ERROR);    
+}
+
+ /* def: Exception   (End) */
+
+
 %%
 
 
