@@ -345,7 +345,7 @@ SIGMA (.)
 
 <STRING>\\[^\0\r]	{
   char matched = yytext[1];
-  char text = '\0';
+  char text = matched;
 
   if (matched == 'b') {
     text = '\b';
@@ -355,8 +355,6 @@ SIGMA (.)
     text = '\n';
   } else if (matched == 'f') {
     text = '\f';
-  } else {
-    text = matched;
   }
 
   APPEND_STRING_BUF(&text, 1);
