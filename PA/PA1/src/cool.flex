@@ -489,6 +489,25 @@ SIGMA (.)
  /* def: Multiple-character Operators   (End) */
 
 
+ /* def: Symbols (Begin) */
+
+{INT_CONST} {
+  cool_yylval.symbol = inttable.add_string(yytext, yyleng);
+  return (INT_CONST);
+}
+
+{TYPEID} {
+  cool_yylval.symbol = idtable.add_string(yytext);
+  return (TYPEID);
+}
+
+{OBJECTID} {
+  cool_yylval.symbol = idtable.add_string(yytext);
+  return (OBJECTID);
+}
+
+ /* def: Symbols   (End) */
+
 
 %%
 
