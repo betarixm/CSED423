@@ -447,6 +447,11 @@ SIGMA (.)
   return (NOT);
 }
 
+ /* def: Keywords   (End) */
+
+ 
+ /* def: Control Characters (Begin) */
+
 {NEWLINE} {
   ++curr_lineno;
 }
@@ -455,7 +460,9 @@ SIGMA (.)
    
 }
 
- /* def: Keywords   (End) */
+ /* def: Control Characters   (End) */
+
+
 
 
 %%
