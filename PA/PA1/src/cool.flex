@@ -463,6 +463,31 @@ SIGMA (.)
  /* def: Control Characters   (End) */
 
 
+ /* def: Operators (Begin) */
+
+{OPERATORS} {
+  return (yytext[0]);
+}
+
+ /* def: Operators   (End) */
+
+
+ /* def: Multiple-character Operators (Begin) */
+
+{DARROW} {
+  return (DARROW);
+}
+
+{ASSIGN} {
+  return (ASSIGN);
+}
+
+{LE} {
+  return (LE);
+}
+
+ /* def: Multiple-character Operators   (End) */
+
 
 
 %%
