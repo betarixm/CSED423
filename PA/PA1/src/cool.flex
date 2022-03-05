@@ -340,7 +340,7 @@ SIGMA (.)
 
 <STRING>\0 {
   BEGIN(INITIAL);
-  SET_ERROR_MSG("String contains null character");
+  SET_ERROR_MSG("String contains invalid character");
 
   return (ERROR);
 }
