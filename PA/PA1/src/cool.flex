@@ -333,7 +333,7 @@ SIGMA (.)
 
 <STRING><<EOF>> {
   BEGIN(INITIAL);
-  SET_ERROR_MSG("EOF in string");
+  SET_ERROR_MSG("EOF in string constant");
 
   return (ERROR);
 }
