@@ -109,6 +109,8 @@ int comment_depth = 0;
 
 char string_buf_overflow_flag = FALSE;
 
+char string_invalid_char_flag = FALSE;
+
 void init_string_buf();
 
 int append_string_buf(std::string str);
@@ -325,10 +327,12 @@ SIGMA (.)
     SET_ERROR_MSG("String constant too long");
 
     return (ERROR);
-  }
+  } else if (string_invalid_char_flag){
 
-  SET_SYMBOL(ADD_STRING__GET_ELEM(stringtable, string_buf));
-  return (STR_CONST);
+  } else {
+    SET_SYMBOL(ADD_STRING__GET_ELEM(stringtable, string_buf));
+    return (STR_CONST);
+  }
 }
 
 <STRING><<EOF>> {
@@ -339,8 +343,9 @@ SIGMA (.)
 }
 
 <STRING>\0 {
-  BEGIN(INITIAL);
   SET_ERROR_MSG("String contains invalid character");
+  
+  string_invalid_char_flag = TRUE;
 
   return (ERROR);
 }
@@ -537,6 +542,7 @@ void init_string_buf() {
   string_buf[0] = '\0';
   string_buf_ptr = string_buf;
   string_buf_overflow_flag = FALSE;
+  string_invalid_char_flag = FALSE;
 }
 
 int append_string_buf(std::string str) {
