@@ -95,6 +95,14 @@ extern YYSTYPE cool_yylval;
 
 #define APPEND_STRING_BUF(...) GET_MACRO(__VA_ARGS__, APPEND_STRING_BUF_2, APPEND_STRING_BUF_1)(__VA_ARGS__)
 
+#define ERROR_ON_STRING(MSG) {\
+  BEGIN(INITIAL);\
+  if (!string_invalid_char_flag) {\
+    SET_ERROR_MSG(MSG);\
+    return (ERROR);\
+  }\
+}
+
 /* def: String   (End) */
 
 
@@ -166,7 +174,7 @@ LOWER ([a-z])
 
 LETTER  ({UPPER}|{LOWER})
 ID      ({LETTER}|{DIGIT}|_)
-NEWLINE ({CR}{LF}|{CR}|{LF})
+NEWLINE ({LF})
 
 /* def: Synonym   (End) */
 
@@ -336,10 +344,7 @@ SIGMA (.)
 }
 
 <STRING><<EOF>> {
-  BEGIN(INITIAL);
-  SET_ERROR_MSG("EOF in string constant");
-
-  return (ERROR);
+  ERROR_ON_STRING("EOF in string constant");
 }
 
 <STRING>\0 {
@@ -351,13 +356,10 @@ SIGMA (.)
 }
 
 <STRING>{NEWLINE}	{
-  BEGIN(INITIAL);
-  SET_ERROR_MSG("Unterminated string constant");
-
-  return (ERROR);
+  ERROR_ON_STRING("Unterminated string constant");
 }
 
-<STRING>\\[^\0\r]	{
+<STRING>\\[^\0]	{
   char matched = yytext[1];
   char text = matched;
 
