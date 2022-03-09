@@ -1,2 +1,5 @@
 Lecture
 Lab
+*.cc
+*.o
+*.tar
