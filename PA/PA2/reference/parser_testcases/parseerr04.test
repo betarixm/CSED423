@@ -1,0 +1,4 @@
+-- omitted punctuation
+class A { 
+  z : Int
+};
