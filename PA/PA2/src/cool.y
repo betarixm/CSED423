@@ -114,6 +114,16 @@ extern int VERBOSE_ERRORS;
 %type <case_> case
 %type <cases> case_body
 
+/* Precedence declarations go here. */
+%right ASSIGN
+%left NOT
+%nonassoc LE '<' '='
+%left '+' '-'
+%left '*' '/'
+%left ISVOID
+%left '~'
+%left '@'
+%left '.'
 
 %%
 /* 
