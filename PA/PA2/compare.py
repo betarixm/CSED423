@@ -7,7 +7,8 @@ import subprocess
 
 import difflib
 
-LEXER_PATH = "../PA1/reference/lexer"
+LEXER_PATH = "../PA1/src/lexer"
+REF_LEXER_PATH = "../PA1/reference/lexer"
 
 PARSER_PATH = "src/parser"
 REF_PARSER_PATH = "reference/parser"
@@ -71,7 +72,7 @@ def run(lexer_path: str, parser_path: str, abs_path: str):
 def compare(filepath: str):
 
     out, _ = run(LEXER_PATH, PARSER_PATH, generate_abspath(filepath))
-    ref_out, _ = run(LEXER_PATH, REF_PARSER_PATH, generate_abspath(filepath))
+    ref_out, _ = run(REF_LEXER_PATH, REF_PARSER_PATH, generate_abspath(filepath))
 
     out, ref_out = out.decode("utf-8"), ref_out.decode("utf-8")
 
