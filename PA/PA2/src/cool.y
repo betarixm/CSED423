@@ -99,9 +99,20 @@ extern int VERBOSE_ERRORS;
 %type <class_> class
 
 /* You will want to change the following line. */
-%type <features> dummy_feature_list
+%type <feature> feature
+%type <features> feature_list
 
-/* Precedence declarations go here. */
+%type <formal> formal
+%type <formals> formal_list
+
+%type <expression> expression
+%type <expressions> expression_comma_list
+%type <expressions> expression_semi_nonempty_list
+
+%type <expression> let_body
+
+%type <case_> case
+%type <cases> case_body
 
 
 %%
