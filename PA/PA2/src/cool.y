@@ -10,7 +10,9 @@
 #include "utilities.h"
 
 /* Add your own C declarations here */
-
+#define ERROR_HANDLER() {\
+  \
+}
 
 /************************************************************************/
 /*                DONT CHANGE ANYTHING IN THIS SECTION                  */
