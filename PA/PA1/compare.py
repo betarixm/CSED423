@@ -1,6 +1,7 @@
 from wasabi import *
 
 import os
+import sys
 import glob
 import subprocess
 
@@ -72,8 +73,8 @@ def compare(filepath: str):
 if __name__ == "__main__":
     build()
 
-    for filename in ["src/test.cl"] + list(
-        glob.glob("../Resources/cool-examples/*.cl")
+    for filename in list(
+        glob.glob(sys.argv[1])
     ):
         print(f"[*] {filename.split('/')[-1]}")
         compare(filename)
