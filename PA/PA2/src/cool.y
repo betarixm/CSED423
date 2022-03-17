@@ -137,19 +137,205 @@ class_list
                 { $$ = single_Classes($1); }
         | class_list class /* several classes */
                 { $$ = append_Classes($1,single_Classes($2)); }
+        | error {
+                ERROR_HANDLER();
+        }
+        | class_list error {
+                ERROR_HANDLER();
+        }
         ;
 
 /* If no parent is specified, the class inherits from the Object class. */
-class  : CLASS TYPEID '{' dummy_feature_list '}' ';'
+class  : CLASS TYPEID '{' feature_list '}' ';'
                 { $$ = class_($2,idtable.add_string("Object"),$4,
                               stringtable.add_string(curr_filename)); }
-        | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
+        | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
                 { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
         ;
 
 /* Feature list may be empty, but no empty features in list. */
-dummy_feature_list:        /* empty */
-                {  $$ = nil_Features(); }
+feature_list
+        : /* empty */ {
+                $$ = nil_Features();
+        }
+        | feature[feat] ';' {
+                $$ = single_Features($feat);
+        }
+        | feature_list[feats] feature[feat] ';' {
+                $$ = append_Features($feats, single_Features($feat));
+        }
+        | error ';' {
+                ERROR_HANDLER();
+        }
+        | feature_list error ';' {
+                ERROR_HANDLER();
+        }
+        ;
+
+feature
+        : OBJECTID[class] '(' formal_list[params] ')' ':' TYPEID[type] '{' expression[expr] '}' {
+                $$ = method($class, $params, $type, $expr);
+        }
+        | OBJECTID[class] ':' TYPEID[type] ASSIGN[assign] expression[expr] {
+                $$ = attr($class, $type, $expr);
+        }
+        | OBJECTID[class] ':' TYPEID[type] {
+                $$ = attr($class, $type, no_expr());
+        }
+        ;
+
+formal
+        : OBJECTID[name] ':' TYPEID[type] {
+                $$ = formal($name, $type);
+        }
+
+formal_list
+        : /* empty */ {
+                $$ = nil_Formals();
+        }
+        | formal[form] {
+                $$ = single_Formals($form);
+        }
+        | formal_list[forms] ',' formal[form] {
+                $$ = append_Formals($forms, single_Formals($form));
+        }
+        ;
+
+expression_comma_list
+        : /* empty */ {
+                $$ = nil_Expressions();
+        }
+        | expression[expr] {
+                $$ = single_Expressions($expr);
+        }
+        | expression_comma_list[exprs] ',' expression[expr] {
+                $$ = append_Expressions($exprs, single_Expressions($expr));
+        }
+        ;
+
+expression_semi_nonempty_list
+        : expression[expr] ';' {
+                $$ = single_Expressions($expr);
+        }
+        | expression_semi_nonempty_list[exprs] expression[expr] ';' {
+                $$ = append_Expressions($exprs, single_Expressions($expr));
+        }
+        | error ';' {
+                ERROR_HANDLER();
+        }
+        | expression_semi_nonempty_list error ';' {
+                ERROR_HANDLER();
+        }
+        ;
+
+expression
+        : OBJECTID[variable] ASSIGN expression[expr] {
+                $$ = assign($variable, $expr);
+        }
+        | expression[expr] '@' TYPEID[type] '.' OBJECTID[method] '(' expression_comma_list[params] ')' {
+                $$ = static_dispatch($expr, $type, $method, $params);
+        }
+        | expression[expr] '.' OBJECTID[method] '(' expression_comma_list[params] ')' {
+                $$ = dispatch($expr, $method, $params);
+        }
+        | OBJECTID[method] '(' expression_comma_list[params] ')' {
+                $$ = dispatch(object(idtable.add_string("self")), $method, $params);
+        }
+        | IF expression[condition] THEN expression[resolve] ELSE expression[reject] FI {
+                $$ = cond($condition, $resolve, $reject);
+        }
+        | WHILE expression[condition] LOOP expression[expr] POOL {
+                $$ = loop($condition, $expr);
+        }
+        | '{' expression_semi_nonempty_list[exprs] '}' {
+                $$ = block($exprs);
+        }
+        | LET let_body[body] {
+                $$ = $body;
+        }
+        | CASE expression[var] OF case_body[body] ESAC {
+                $$ = typcase($var, $body);
+        }
+        | NEW TYPEID[name] {
+                $$ = new_($name);
+        }
+        | ISVOID expression[expr] {
+                $$ = isvoid($expr);
+        }
+        | expression[left] '+' expression[right] {
+                $$ = plus($left, $right);
+        }
+        | expression[left] '-' expression[right] {
+                $$ = sub($left, $right);
+        }
+        | expression[left] '*' expression[right] {
+                $$ = mul($left, $right);
+        }
+        | expression[left] '/' expression[right] {
+                $$ = divide($left, $right);
+        }
+        | '~' expression[expr] {
+                $$ = neg($expr);
+        }
+        | expression[left] '<' expression[right] {
+                $$ = lt($left, $right);
+        }
+        | expression[left] LE expression[right] {
+                $$ = leq($left, $right);
+        }
+        | expression[left] '=' expression[right] {
+                $$ = eq($left, $right);
+        }
+        | NOT expression[expr] {
+                $$ = comp($expr);
+        }
+        | '(' expression[expr] ')' {
+                $$ = $expr;
+        }
+        | OBJECTID[name] {
+                $$ = object($name);
+        }
+        | INT_CONST[int] {
+                $$ = int_const($int);
+        }
+        | STR_CONST[str] {
+                $$ = string_const($str);
+        }
+        | BOOL_CONST[bool] {
+                $$ = bool_const($bool);
+        }
+        ;
+
+let_body
+        : OBJECTID[name] ':' TYPEID[type] IN expression[expr] {
+                $$ = let($name, $type, no_expr(), $expr);
+        }
+        | OBJECTID[name] ':' TYPEID[type] ASSIGN expression[value] IN expression[expr] {
+                $$ = let($name, $type, $value, $expr);
+        }
+        | OBJECTID[name] ':' TYPEID[type] ',' let_body[expr] {
+                $$ = let($name, $type, no_expr(), $expr);
+        }
+        | OBJECTID[name] ':' TYPEID[type] ASSIGN expression[value] ',' let_body[expr] {
+                $$ = let($name, $type, $value, $expr);
+        }
+        | error ',' let_body {
+                ERROR_HANDLER();
+        }
+        ;
+
+case
+        : OBJECTID[condition] ':' TYPEID[type] DARROW expression[expr] ';' {
+                $$ = branch($condition, $type, $expr);
+        }
+
+case_body
+        : case[default] {
+                $$ = single_Cases($default);
+        }
+        | case_body[cases] case[default] {
+                $$ = append_Cases($cases, single_Cases($default));
+        }
         ;
 
 /* end of grammar */
