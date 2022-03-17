@@ -356,6 +356,7 @@ SIGMA (.)
 }
 
 <STRING>{NEWLINE}	{
+  ++curr_lineno;
   ERROR_ON_STRING("Unterminated string constant");
 }
 
@@ -371,6 +372,8 @@ SIGMA (.)
     text = '\n';
   } else if (matched == 'f') {
     text = '\f';
+  } else if (matched == '\n') {
+    ++curr_lineno;
   }
 
   APPEND_STRING_BUF(&text, 1);
