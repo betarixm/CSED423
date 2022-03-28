@@ -1,0 +1,7 @@
+class A {
+  foo () : String {
+    -- let expression without initialization
+
+  bar () : Bool {
+    -- let expression with initialization
+};
