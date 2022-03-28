@@ -33,7 +33,7 @@ std::string coloring(std::string str, int color);
 // as fixed names used by the runtime system.
 //
 //////////////////////////////////////////////////////////////////////
-static Symbol 
+static Symbol
     arg,
     arg2,
     Bool,
@@ -61,14 +61,16 @@ static Symbol
     type_name,
     val;
 
-void print(std::string str) {
+void print(std::string str)
+{
 #ifdef VERBOSE
-  std::cout << coloring("[*] OUT: ", YELLOW) << str << std::endl;
+    std::cout << coloring("[*] OUT: ", YELLOW) << str << std::endl;
 #endif
 }
 
-std::string coloring(std::string str, int color) {
-  return "\x1b[" + std::to_string(color) + "m" + str + "\x1b[" + std::to_string(RESET) + "m";
+std::string coloring(std::string str, int color)
+{
+    return "\x1b[" + std::to_string(color) + "m" + str + "\x1b[" + std::to_string(RESET) + "m";
 }
 
 //
@@ -76,81 +78,90 @@ std::string coloring(std::string str, int color) {
 //
 static void initialize_constants(void)
 {
-    arg         = idtable.add_string("arg");
-    arg2        = idtable.add_string("arg2");
-    Bool        = idtable.add_string("Bool");
-    concat      = idtable.add_string("concat");
-    cool_abort  = idtable.add_string("abort");
-    copy        = idtable.add_string("copy");
-    Int         = idtable.add_string("Int");
-    in_int      = idtable.add_string("in_int");
-    in_string   = idtable.add_string("in_string");
-    IO          = idtable.add_string("IO");
-    length      = idtable.add_string("length");
-    Main        = idtable.add_string("Main");
-    main_meth   = idtable.add_string("main");
-    //   _no_class is a symbol that can't be the name of any 
+    arg = idtable.add_string("arg");
+    arg2 = idtable.add_string("arg2");
+    Bool = idtable.add_string("Bool");
+    concat = idtable.add_string("concat");
+    cool_abort = idtable.add_string("abort");
+    copy = idtable.add_string("copy");
+    Int = idtable.add_string("Int");
+    in_int = idtable.add_string("in_int");
+    in_string = idtable.add_string("in_string");
+    IO = idtable.add_string("IO");
+    length = idtable.add_string("length");
+    Main = idtable.add_string("Main");
+    main_meth = idtable.add_string("main");
+    //   _no_class is a symbol that can't be the name of any
     //   user-defined class.
-    No_class    = idtable.add_string("_no_class");
-    No_type     = idtable.add_string("_no_type");
-    Object      = idtable.add_string("Object");
-    out_int     = idtable.add_string("out_int");
-    out_string  = idtable.add_string("out_string");
-    prim_slot   = idtable.add_string("_prim_slot");
-    self        = idtable.add_string("self");
-    SELF_TYPE   = idtable.add_string("SELF_TYPE");
-    Str         = idtable.add_string("String");
-    str_field   = idtable.add_string("_str_field");
-    substr      = idtable.add_string("substr");
-    type_name   = idtable.add_string("type_name");
-    val         = idtable.add_string("_val");
+    No_class = idtable.add_string("_no_class");
+    No_type = idtable.add_string("_no_type");
+    Object = idtable.add_string("Object");
+    out_int = idtable.add_string("out_int");
+    out_string = idtable.add_string("out_string");
+    prim_slot = idtable.add_string("_prim_slot");
+    self = idtable.add_string("self");
+    SELF_TYPE = idtable.add_string("SELF_TYPE");
+    Str = idtable.add_string("String");
+    str_field = idtable.add_string("_str_field");
+    substr = idtable.add_string("substr");
+    type_name = idtable.add_string("type_name");
+    val = idtable.add_string("_val");
 }
 
-
-void ClassTable::add_class(Class_ class_) {
+void ClassTable::add_class(Class_ class_)
+{
     Symbol name = class_->get_name();
     Symbol parent = class_->get_parent();
 
-    if (parent == Bool || parent == Str || parent == SELF_TYPE) {
+    if (parent == Bool || parent == Str || parent == SELF_TYPE)
+    {
         // TODO: Handle Error
-    } else if (name == SELF_TYPE) {
+    }
+    else if (name == SELF_TYPE)
+    {
         // TODO: Handle Error
-    } else if (this->symbol_class_map.count(name) > 0 || this->parent_map.count(name) > 0 ) {
+    }
+    else if (this->symbol_class_map.count(name) > 0 || this->parent_map.count(name) > 0)
+    {
         // TODO: Handle Error
-    } else {
+    }
+    else
+    {
         print("(add_class) name: " + std::string(name->get_string()) + ", parent: " + std::string(parent->get_string()));
         this->symbol_class_map[name] = class_;
         this->parent_map[name] = parent;
     }
 }
 
-ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) {
+ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr)
+{
 
     /* Fill this in */
     install_basic_classes();
 
-    for(auto i = classes->first(); classes->more(i); i = classes->next(i)) {
+    for (auto i = classes->first(); classes->more(i); i = classes->next(i))
+    {
         add_class(classes->nth(i));
     }
-
 }
 
-void ClassTable::install_basic_classes() {
+void ClassTable::install_basic_classes()
+{
 
     // The tree package uses these globals to annotate the classes built below.
-    curr_lineno  = 0;
+    curr_lineno = 0;
     Symbol filename = stringtable.add_string("<basic class>");
-    
+
     // The following demonstrates how to create dummy parse trees to
     // refer to basic Cool classes.  There's no need for method
     // bodies -- these are already built into the runtime system.
-    
+
     // IMPORTANT: The results of the following expressions are
     // stored in local variables.  You will want to do something
     // with those variables at the end of this method to make this
     // code meaningful.
 
-    // 
+    //
     // The Object class has no parent class. Its methods are
     //        abort() : Object    aborts the program
     //        type_name() : Str   returns a string representation of class name
@@ -160,51 +171,51 @@ void ClassTable::install_basic_classes() {
     // are already built in to the runtime system.
 
     Class_ Object_class =
-	class_(Object, 
-	       No_class,
-	       append_Features(
-			       append_Features(
-					       single_Features(method(cool_abort, nil_Formals(), Object, no_expr())),
-					       single_Features(method(type_name, nil_Formals(), Str, no_expr()))),
-			       single_Features(method(copy, nil_Formals(), SELF_TYPE, no_expr()))),
-	       filename);
+        class_(Object,
+               No_class,
+               append_Features(
+                   append_Features(
+                       single_Features(method(cool_abort, nil_Formals(), Object, no_expr())),
+                       single_Features(method(type_name, nil_Formals(), Str, no_expr()))),
+                   single_Features(method(copy, nil_Formals(), SELF_TYPE, no_expr()))),
+               filename);
 
-    // 
+    //
     // The IO class inherits from Object. Its methods are
     //        out_string(Str) : SELF_TYPE       writes a string to the output
     //        out_int(Int) : SELF_TYPE            "    an int    "  "     "
     //        in_string() : Str                 reads a string from the input
     //        in_int() : Int                      "   an int     "  "     "
     //
-    Class_ IO_class = 
-	class_(IO, 
-	       Object,
-	       append_Features(
-			       append_Features(
-					       append_Features(
-							       single_Features(method(out_string, single_Formals(formal(arg, Str)),
-										      SELF_TYPE, no_expr())),
-							       single_Features(method(out_int, single_Formals(formal(arg, Int)),
-										      SELF_TYPE, no_expr()))),
-					       single_Features(method(in_string, nil_Formals(), Str, no_expr()))),
-			       single_Features(method(in_int, nil_Formals(), Int, no_expr()))),
-	       filename);  
+    Class_ IO_class =
+        class_(IO,
+               Object,
+               append_Features(
+                   append_Features(
+                       append_Features(
+                           single_Features(method(out_string, single_Formals(formal(arg, Str)),
+                                                  SELF_TYPE, no_expr())),
+                           single_Features(method(out_int, single_Formals(formal(arg, Int)),
+                                                  SELF_TYPE, no_expr()))),
+                       single_Features(method(in_string, nil_Formals(), Str, no_expr()))),
+                   single_Features(method(in_int, nil_Formals(), Int, no_expr()))),
+               filename);
 
     //
     // The Int class has no methods and only a single attribute, the
-    // "val" for the integer. 
+    // "val" for the integer.
     //
     Class_ Int_class =
-	class_(Int, 
-	       Object,
-	       single_Features(attr(val, prim_slot, no_expr())),
-	       filename);
+        class_(Int,
+               Object,
+               single_Features(attr(val, prim_slot, no_expr())),
+               filename);
 
     //
     // Bool also has only the "val" slot.
     //
     Class_ Bool_class =
-	class_(Bool, Object, single_Features(attr(val, prim_slot, no_expr())),filename);
+        class_(Bool, Object, single_Features(attr(val, prim_slot, no_expr())), filename);
 
     //
     // The class Str has a number of slots and operations:
@@ -213,27 +224,27 @@ void ClassTable::install_basic_classes() {
     //       length() : Int                       returns length of the string
     //       concat(arg: Str) : Str               performs string concatenation
     //       substr(arg: Int, arg2: Int): Str     substring selection
-    //       
+    //
     Class_ Str_class =
-	class_(Str, 
-	       Object,
-	       append_Features(
-			       append_Features(
-					       append_Features(
-							       append_Features(
-									       single_Features(attr(val, Int, no_expr())),
-									       single_Features(attr(str_field, prim_slot, no_expr()))),
-							       single_Features(method(length, nil_Formals(), Int, no_expr()))),
-					       single_Features(method(concat, 
-								      single_Formals(formal(arg, Str)),
-								      Str, 
-								      no_expr()))),
-			       single_Features(method(substr, 
-						      append_Formals(single_Formals(formal(arg, Int)), 
-								     single_Formals(formal(arg2, Int))),
-						      Str, 
-						      no_expr()))),
-	       filename);
+        class_(Str,
+               Object,
+               append_Features(
+                   append_Features(
+                       append_Features(
+                           append_Features(
+                               single_Features(attr(val, Int, no_expr())),
+                               single_Features(attr(str_field, prim_slot, no_expr()))),
+                           single_Features(method(length, nil_Formals(), Int, no_expr()))),
+                       single_Features(method(concat,
+                                              single_Formals(formal(arg, Str)),
+                                              Str,
+                                              no_expr()))),
+                   single_Features(method(substr,
+                                          append_Formals(single_Formals(formal(arg, Int)),
+                                                         single_Formals(formal(arg2, Int))),
+                                          Str,
+                                          no_expr()))),
+               filename);
 
     this->add_class(Object_class);
     this->add_class(IO_class);
@@ -247,34 +258,32 @@ void ClassTable::install_basic_classes() {
 // semant_error is an overloaded function for reporting errors
 // during semantic analysis.  There are three versions:
 //
-//    ostream& ClassTable::semant_error()                
+//    ostream& ClassTable::semant_error()
 //
 //    ostream& ClassTable::semant_error(Class_ c)
 //       print line number and filename for `c'
 //
-//    ostream& ClassTable::semant_error(Symbol filename, tree_node *t)  
+//    ostream& ClassTable::semant_error(Symbol filename, tree_node *t)
 //       print a line number and filename
 //
 ///////////////////////////////////////////////////////////////////
 
-ostream& ClassTable::semant_error(Class_ c)
-{                                                             
-    return semant_error(c->get_filename(),c);
-}    
+ostream &ClassTable::semant_error(Class_ c)
+{
+    return semant_error(c->get_filename(), c);
+}
 
-ostream& ClassTable::semant_error(Symbol filename, tree_node *t)
+ostream &ClassTable::semant_error(Symbol filename, tree_node *t)
 {
     error_stream << filename << ":" << t->get_line_number() << ": ";
     return semant_error();
 }
 
-ostream& ClassTable::semant_error()                  
-{                                                 
-    semant_errors++;                            
+ostream &ClassTable::semant_error()
+{
+    semant_errors++;
     return error_stream;
-} 
-
-
+}
 
 /*   This is the entry point to the semantic checker.
 
@@ -298,10 +307,9 @@ void program_class::semant()
 
     /* some semantic analysis code may go here */
 
-    if (classtable->errors()) {
-	cerr << "Compilation halted due to static semantic errors." << endl;
-	exit(1);
+    if (classtable->errors())
+    {
+        cerr << "Compilation halted due to static semantic errors." << endl;
+        exit(1);
     }
 }
-
-
