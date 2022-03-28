@@ -6,9 +6,23 @@
 #include "semant.h"
 #include "utilities.h"
 
+#define RED 31
+#define GREEN 32
+#define YELLOW 33
+#define BLUE 34
+#define MAGENTA 35
+#define CYAN 36
+#define WHITE 37
+#define RESET 0
 
 extern int semant_debug;
 extern char *curr_filename;
+
+#define VERBOSE
+
+void print(std::string str);
+
+std::string coloring(std::string str, int color);
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -46,6 +60,17 @@ static Symbol
     substr,
     type_name,
     val;
+
+void print(std::string str) {
+#ifdef VERBOSE
+  std::cout << coloring("[*] OUT: ", YELLOW) << str << std::endl;
+#endif
+}
+
+std::string coloring(std::string str, int color) {
+  return "\x1b[" + std::to_string(color) + "m" + str + "\x1b[" + std::to_string(RESET) + "m";
+}
+
 //
 // Initializing the predefined symbols.
 //
@@ -82,10 +107,31 @@ static void initialize_constants(void)
 }
 
 
+void ClassTable::add_class(Class_ class_) {
+    Symbol name = class_->get_name();
+    Symbol parent = class_->get_parent();
+
+    if (parent == Bool || parent == Str || parent == SELF_TYPE) {
+        // TODO: Handle Error
+    } else if (name == SELF_TYPE) {
+        // TODO: Handle Error
+    } else if (this->symbol_class_map.count(name) > 0 || this->parent_map.count(name) > 0 ) {
+        // TODO: Handle Error
+    } else {
+        print("(add_class) name: " + std::string(name->get_string()) + ", parent: " + std::string(parent->get_string()));
+        this->symbol_class_map[name] = class_;
+        this->parent_map[name] = parent;
+    }
+}
 
 ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) {
 
     /* Fill this in */
+    install_basic_classes();
+
+    for(auto i = classes->first(); classes->more(i); i = classes->next(i)) {
+        add_class(classes->nth(i));
+    }
 
 }
 
@@ -188,6 +234,12 @@ void ClassTable::install_basic_classes() {
 						      Str, 
 						      no_expr()))),
 	       filename);
+
+    this->add_class(Object_class);
+    this->add_class(IO_class);
+    this->add_class(Int_class);
+    this->add_class(Bool_class);
+    this->add_class(Str_class);
 }
 
 ////////////////////////////////////////////////////////////////////

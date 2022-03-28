@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <iostream>  
+#include <map>
 #include "cool-tree.h"
 #include "stringtab.h"
 #include "symtab.h"
@@ -22,8 +23,13 @@ typedef ClassTable *ClassTableP;
 class ClassTable {
 private:
   int semant_errors;
-  void install_basic_classes();
+  std::map<Symbol, Class_> symbol_class_map;
+  std::map<Symbol, Symbol> parent_map;
   ostream& error_stream;
+  
+  void install_basic_classes();
+  void add_class(Class_ class_);
+  
 
 public:
   ClassTable(Classes);
