@@ -11,6 +11,8 @@
 
 #include "tree.h"
 #include "cool-tree.handcode.h"
+#include "symtab.h"
+#include <utility>
 
 
 // define the class for phylum
@@ -35,6 +37,12 @@ class Class__class : public tree_node {
 public:
    tree_node *copy()		 { return copy_Class_(); }
    virtual Class_ copy_Class_() = 0;
+   virtual Symbol get_parent() = 0;
+   virtual Symbol get_name() = 0;
+   virtual Features get_features() = 0;
+   virtual cool::SymbolTable<Symbol, Entry>* get_attr_symtab() = 0;
+   virtual cool::SymbolTable<Symbol, Entry>* get_method_symtab() = 0;
+   virtual Feature get_feature_by_symbol(Symbol m) = 0;
 
 #ifdef Class__EXTRAS
    Class__EXTRAS
@@ -49,6 +57,12 @@ class Feature_class : public tree_node {
 public:
    tree_node *copy()		 { return copy_Feature(); }
    virtual Feature copy_Feature() = 0;
+   virtual Symbol get_name() = 0;
+   virtual Symbol get_type() = 0;
+   virtual bool is_attr() = 0;
+   virtual int check_scope(Class_, cool::SymbolTable<Symbol, Entry>*) = 0;
+   virtual int check_type(Class_, cool::SymbolTable<Symbol, Entry>*) = 0;
+   virtual Formals get_formals() = 0;
 
 #ifdef Feature_EXTRAS
    Feature_EXTRAS
@@ -63,6 +77,8 @@ class Formal_class : public tree_node {
 public:
    tree_node *copy()		 { return copy_Formal(); }
    virtual Formal copy_Formal() = 0;
+   virtual Symbol get_name() = 0;
+   virtual Symbol get_type() = 0;
 
 #ifdef Formal_EXTRAS
    Formal_EXTRAS
@@ -77,6 +93,11 @@ class Expression_class : public tree_node {
 public:
    tree_node *copy()		 { return copy_Expression(); }
    virtual Expression copy_Expression() = 0;
+   virtual int check_scope(Class_, cool::SymbolTable<Symbol, Entry>*) { return 0; }
+   virtual int check_type(Class_, cool::SymbolTable<Symbol, Entry>*) { return 0; };
+   virtual Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*) {
+      return NULL;
+   }
 
 #ifdef Expression_EXTRAS
    Expression_EXTRAS
@@ -91,6 +112,8 @@ class Case_class : public tree_node {
 public:
    tree_node *copy()		 { return copy_Case(); }
    virtual Case copy_Case() = 0;
+   virtual int check_scope(Class_, cool::SymbolTable<Symbol, Entry>*) = 0;
+   virtual Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*) = 0;
 
 #ifdef Case_EXTRAS
    Case_EXTRAS
@@ -152,15 +175,35 @@ protected:
    Symbol parent;
    Features features;
    Symbol filename;
+   cool::SymbolTable<Symbol, Entry>* attr_symtab;
+   cool::SymbolTable<Symbol, Entry>* method_symtab;
 public:
    class__class(Symbol a1, Symbol a2, Features a3, Symbol a4) {
       name = a1;
       parent = a2;
       features = a3;
       filename = a4;
+      attr_symtab = new cool::SymbolTable<Symbol, Entry>();
+      method_symtab = new cool::SymbolTable<Symbol, Entry>();
+      attr_symtab->enterscope();
+      method_symtab->enterscope();
    }
    Class_ copy_Class_();
    void dump(ostream& stream, int n);
+   Symbol get_parent() { return parent; }
+   Symbol get_name() { return name; }
+   Features get_features() { return features; }
+   cool::SymbolTable<Symbol, Entry>* get_attr_symtab() { return attr_symtab; }
+   cool::SymbolTable<Symbol, Entry>* get_method_symtab() { return method_symtab; }
+   Feature get_feature_by_symbol(Symbol m) {
+      for (int i = features->first(); features->more(i); i = features->next(i)) {
+         Feature f = features->nth(i);
+         if (f->get_name() == m) {
+            return f;
+         }
+      }
+      return NULL;
+   }
 
 #ifdef Class__SHARED_EXTRAS
    Class__SHARED_EXTRAS
@@ -178,15 +221,25 @@ protected:
    Formals formals;
    Symbol return_type;
    Expression expr;
+   bool _is_attr;
 public:
    method_class(Symbol a1, Formals a2, Symbol a3, Expression a4) {
       name = a1;
       formals = a2;
       return_type = a3;
       expr = a4;
+      _is_attr = false;
    }
    Feature copy_Feature();
    void dump(ostream& stream, int n);
+   Symbol get_name() { return name; }
+   Symbol get_type() { return return_type; }
+   bool is_attr() { return _is_attr; }
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   int check_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Formals get_formals() {
+      return formals;
+   }
 
 #ifdef Feature_SHARED_EXTRAS
    Feature_SHARED_EXTRAS
@@ -203,14 +256,27 @@ protected:
    Symbol name;
    Symbol type_decl;
    Expression init;
+   bool _is_attr;
 public:
    attr_class(Symbol a1, Symbol a2, Expression a3) {
       name = a1;
       type_decl = a2;
       init = a3;
+      _is_attr = true;
    }
    Feature copy_Feature();
    void dump(ostream& stream, int n);
+   Symbol get_name() { return name; }
+   Symbol get_type() { return type_decl; }
+   bool is_attr() { return _is_attr; }
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   int check_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Formals get_formals() {
+      return list_node<Formal>::nil();
+   }
 
 #ifdef Feature_SHARED_EXTRAS
    Feature_SHARED_EXTRAS
@@ -233,6 +299,8 @@ public:
    }
    Formal copy_Formal();
    void dump(ostream& stream, int n);
+   Symbol get_name() { return name; }
+   Symbol get_type() { return type_decl; }
 
 #ifdef Formal_SHARED_EXTRAS
    Formal_SHARED_EXTRAS
@@ -257,6 +325,8 @@ public:
    }
    Case copy_Case();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Case_SHARED_EXTRAS
    Case_SHARED_EXTRAS
@@ -279,6 +349,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -305,6 +380,8 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -329,6 +406,8 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -353,6 +432,8 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -375,6 +456,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -397,6 +483,8 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -417,6 +505,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -443,6 +536,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -465,6 +563,10 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      return e1->check_scope(c, o) + e2->check_scope(c, o);
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -487,6 +589,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -509,6 +616,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -531,6 +643,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -551,6 +668,10 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      return e1->check_scope(c, o);
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -573,6 +694,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -595,6 +721,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -617,6 +748,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -637,6 +773,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -657,6 +798,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -677,6 +819,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -697,6 +840,7 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -717,6 +861,8 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -737,6 +883,11 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+      // TODO
+      return 0;
+   }
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS
@@ -775,6 +926,8 @@ public:
    }
    Expression copy_Expression();
    void dump(ostream& stream, int n);
+   int check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o);
+   Symbol infer_type(Class_, cool::SymbolTable<Symbol, Entry>*);
 
 #ifdef Expression_SHARED_EXTRAS
    Expression_SHARED_EXTRAS

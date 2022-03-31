@@ -2,14 +2,12 @@
 #define SEMANT_H_
 
 #include <assert.h>
-
 #include <iostream>
-#include <map>
-
 #include "cool-tree.h"
-#include "list.h"
 #include "stringtab.h"
 #include "symtab.h"
+#include "list.h"
+#include <map>
 
 #define TRUE 1
 #define FALSE 0
@@ -23,21 +21,26 @@ typedef ClassTable *ClassTableP;
 // methods.
 
 class ClassTable {
-   private:
-    int semant_errors;
-    std::map<Symbol, Class_> symbol_class_map;
-    std::map<Symbol, Symbol> parent_map;
-    ostream &error_stream;
+private:
+  int semant_errors;
+  void install_basic_classes();
+  ostream& error_stream;
 
-    void install_basic_classes();
-    void add_class(Class_ class_);
+public:
+  static std::map<Symbol, Class_> m;
+  static int semant_errors_;
 
-   public:
-    ClassTable(Classes);
-    int errors() { return semant_errors; }
-    ostream &semant_error();
-    ostream &semant_error(Class_ c);
-    ostream &semant_error(Symbol filename, tree_node *t);
+public:
+  ClassTable(Classes);
+  int errors() { return semant_errors + semant_errors_; }
+  ostream& semant_error();
+  ostream& semant_error(Class_ c);
+  ostream& semant_error(Symbol filename, tree_node *t);
+  void increase_semant_errors();
+  static void semant_error(Class_ c, tree_node* t, char* err_msg);
+  static bool partial_ordered(Symbol, Symbol);
+  static Symbol lub(Symbol, Symbol, Symbol);
 };
 
 #endif
+
