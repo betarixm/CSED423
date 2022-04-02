@@ -712,6 +712,11 @@ int new__class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    return 0;
 }
 
+int attr_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
+    // TODO
+    return 0;
+}
+
 int attr_class::check_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return 0;
@@ -731,6 +736,11 @@ int method_class::check_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
 Symbol bool_const_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
+}
+
+int assign_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o)  {
+    // TODO
+    return 0;
 }
 
 Symbol assign_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
@@ -763,6 +773,11 @@ Symbol dispatch_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o)
    return get_type();
 }
 
+int block_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
+}
+
 Symbol block_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
@@ -782,9 +797,19 @@ Symbol plus_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    return Int;
 }
 
+int sub_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
+}
+
 Symbol sub_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
+}
+
+int mul_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
 }
 
 Symbol mul_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
@@ -792,9 +817,19 @@ Symbol mul_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    return get_type();
 }
 
+int divide_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
+}
+
 Symbol divide_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
+}
+
+int lt_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
 }
 
 Symbol lt_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
@@ -802,11 +837,20 @@ Symbol lt_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    return get_type();
 }
 
+int leq_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
+}
+
 Symbol leq_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
 }
 
+int eq_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
+}
 Symbol eq_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
@@ -817,9 +861,19 @@ Symbol cond_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    return get_type();
 }
 
+int loop_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
+}
+
 Symbol loop_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
+}
+
+int comp_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
 }
 
 Symbol comp_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
@@ -830,6 +884,11 @@ Symbol comp_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
 Symbol neg_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
+}
+
+int isvoid_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
 }
 
 Symbol isvoid_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
@@ -852,6 +911,10 @@ Symbol static_dispatch_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Ent
    return get_type();
 }
 
+int let_class::check_scope(Class_ c, cool::SymbolTable<Symbol, Entry> *o) {
+    // TODO
+    return 0;
+}
 Symbol let_class::infer_type(Class_ c, cool::SymbolTable<Symbol, Entry>* o) {
    // TODO
    return get_type();
