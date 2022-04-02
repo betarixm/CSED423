@@ -26,76 +26,76 @@ extern char *curr_filename;
 //
 //////////////////////////////////////////////////////////////////////
 Symbol
-    arg,
-    arg2,
-    Bool,
-    concat,
-    cool_abort,
-    copy,
-    Int,
-    in_int,
-    in_string,
-    IO,
-    length,
-    Main,
-    main_meth,
-    No_class,
-    No_type,
-    Object,
-    out_int,
-    out_string,
-    prim_slot,
-    self,
-    SELF_TYPE,
-    Str,
-    str_field,
-    substr,
-    type_name,
-    val;
+        arg,
+        arg2,
+        Bool,
+        concat,
+        cool_abort,
+        copy,
+        Int,
+        in_int,
+        in_string,
+        IO,
+        length,
+        Main,
+        main_meth,
+        No_class,
+        No_type,
+        Object,
+        out_int,
+        out_string,
+        prim_slot,
+        self,
+        SELF_TYPE,
+        Str,
+        str_field,
+        substr,
+        type_name,
+        val;
+
 //
 // Initializing the predefined symbols.
 //
-static void initialize_constants(void)
-{
-    arg         = idtable.add_string("arg");
-    arg2        = idtable.add_string("arg2");
-    Bool        = idtable.add_string("Bool");
-    concat      = idtable.add_string("concat");
-    cool_abort  = idtable.add_string("abort");
-    copy        = idtable.add_string("copy");
-    Int         = idtable.add_string("Int");
-    in_int      = idtable.add_string("in_int");
-    in_string   = idtable.add_string("in_string");
-    IO          = idtable.add_string("IO");
-    length      = idtable.add_string("length");
-    Main        = idtable.add_string("Main");
-    main_meth   = idtable.add_string("main");
+static void initialize_constants(void) {
+    arg = idtable.add_string("arg");
+    arg2 = idtable.add_string("arg2");
+    Bool = idtable.add_string("Bool");
+    concat = idtable.add_string("concat");
+    cool_abort = idtable.add_string("abort");
+    copy = idtable.add_string("copy");
+    Int = idtable.add_string("Int");
+    in_int = idtable.add_string("in_int");
+    in_string = idtable.add_string("in_string");
+    IO = idtable.add_string("IO");
+    length = idtable.add_string("length");
+    Main = idtable.add_string("Main");
+    main_meth = idtable.add_string("main");
     //   _no_class is a symbol that can't be the name of any
     //   user-defined class.
-    No_class    = idtable.add_string("_no_class");
-    No_type     = idtable.add_string("_no_type");
-    Object      = idtable.add_string("Object");
-    out_int     = idtable.add_string("out_int");
-    out_string  = idtable.add_string("out_string");
-    prim_slot   = idtable.add_string("_prim_slot");
-    self        = idtable.add_string("self");
-    SELF_TYPE   = idtable.add_string("SELF_TYPE");
-    Str         = idtable.add_string("String");
-    str_field   = idtable.add_string("_str_field");
-    substr      = idtable.add_string("substr");
-    type_name   = idtable.add_string("type_name");
-    val         = idtable.add_string("_val");
+    No_class = idtable.add_string("_no_class");
+    No_type = idtable.add_string("_no_type");
+    Object = idtable.add_string("Object");
+    out_int = idtable.add_string("out_int");
+    out_string = idtable.add_string("out_string");
+    prim_slot = idtable.add_string("_prim_slot");
+    self = idtable.add_string("self");
+    SELF_TYPE = idtable.add_string("SELF_TYPE");
+    Str = idtable.add_string("String");
+    str_field = idtable.add_string("_str_field");
+    substr = idtable.add_string("substr");
+    type_name = idtable.add_string("type_name");
+    val = idtable.add_string("_val");
 }
 
 // Define basic classes as global variable
 static Class_
-    Object_class,
-    IO_class,
-    Int_class,
-    Bool_class,
-    Str_class;
+        Object_class,
+        IO_class,
+        Int_class,
+        Bool_class,
+        Str_class;
 
-ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) {
+ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
     install_basic_classes();
 
     // Construct a mpa: Symbol -> Class_
@@ -105,12 +105,12 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
     m[IO] = IO_class;
     m[Str] = Str_class;
     m[Bool] = Bool_class;
-    for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         Class_ c = classes->nth(i);
         m[c->get_name()] = c;
     }
 
-    for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         Class_ c = classes->nth(i);
         // TODO: Detect undefined parent class
         // TODO: Cannot inherit from SELF_TYPE
@@ -120,13 +120,13 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
     // TODO: check if Main class exists
 
     // Save scope for each class
-    for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         Class_ c = classes->nth(i);
         Features fl = c->get_features();
 
         c->get_attr_symtab()->addid(self, SELF_TYPE);
 
-        for(int j = fl->first(); fl->more(j); j = fl->next(j)) {
+        for (int j = fl->first(); fl->more(j); j = fl->next(j)) {
             Feature f = fl->nth(j);
 
             // TODO
@@ -134,14 +134,14 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
     }
 
     // Check scope for each class (Interpreter Pattern applied)
-    for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         Class_ c = classes->nth(i);
         Features fl = c->get_features();
 
-        for(int j = fl->first(); fl->more(j); j = fl->next(j)) {
+        for (int j = fl->first(); fl->more(j); j = fl->next(j)) {
             Feature f = fl->nth(j);
 
-            cool::SymbolTable<Symbol, Entry>* object_symtab = new cool::SymbolTable<Symbol, Entry>();
+            cool::SymbolTable<Symbol, Entry> *object_symtab = new cool::SymbolTable<Symbol, Entry>();
             object_symtab->enterscope();
 
             semant_errors += f->check_scope(c, object_symtab);
@@ -149,14 +149,14 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
     }
 
     // Check type for each class (Interpreter Pattern applied)
-    for(int i = classes->first(); classes->more(i); i = classes->next(i)) {
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         Class_ c = classes->nth(i);
         Features fl = c->get_features();
 
-        for(int j = fl->first(); fl->more(j); j = fl->next(j)) {
+        for (int j = fl->first(); fl->more(j); j = fl->next(j)) {
             Feature f = fl->nth(j);
 
-            cool::SymbolTable<Symbol, Entry>* object_symtab = new cool::SymbolTable<Symbol, Entry>();
+            cool::SymbolTable<Symbol, Entry> *object_symtab = new cool::SymbolTable<Symbol, Entry>();
             object_symtab->enterscope();
 
             semant_errors += f->check_type(c, object_symtab);
@@ -167,7 +167,7 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0) , error_stream(cerr) 
 void ClassTable::install_basic_classes() {
 
     // The tree package uses these globals to annotate the classes built below.
-    curr_lineno  = 0;
+    curr_lineno = 0;
     Symbol filename = stringtable.add_string("<basic class>");
 
     // The following demonstrates how to create dummy parse trees to
@@ -189,14 +189,14 @@ void ClassTable::install_basic_classes() {
     // are already built in to the runtime system.
 
     Object_class =
-	class_(Object,
-	       No_class,
-	       append_Features(
-			       append_Features(
-					       single_Features(method(cool_abort, nil_Formals(), Object, no_expr())),
-					       single_Features(method(type_name, nil_Formals(), Str, no_expr()))),
-			       single_Features(method(copy, nil_Formals(), SELF_TYPE, no_expr()))),
-	       filename);
+            class_(Object,
+                   No_class,
+                   append_Features(
+                           append_Features(
+                                   single_Features(method(cool_abort, nil_Formals(), Object, no_expr())),
+                                   single_Features(method(type_name, nil_Formals(), Str, no_expr()))),
+                           single_Features(method(copy, nil_Formals(), SELF_TYPE, no_expr()))),
+                   filename);
     Object_class->get_method_symtab()->addid(cool_abort, Object);
     Object_class->get_method_symtab()->addid(type_name, Str);
     Object_class->get_method_symtab()->addid(copy, SELF_TYPE);
@@ -210,18 +210,18 @@ void ClassTable::install_basic_classes() {
     //        in_int() : Int                      "   an int     "  "     "
     //
     IO_class =
-	class_(IO,
-	       Object,
-	       append_Features(
-			       append_Features(
-					       append_Features(
-							       single_Features(method(out_string, single_Formals(formal(arg, Str)),
-										      SELF_TYPE, no_expr())),
-							       single_Features(method(out_int, single_Formals(formal(arg, Int)),
-										      SELF_TYPE, no_expr()))),
-					       single_Features(method(in_string, nil_Formals(), Str, no_expr()))),
-			       single_Features(method(in_int, nil_Formals(), Int, no_expr()))),
-	       filename);
+            class_(IO,
+                   Object,
+                   append_Features(
+                           append_Features(
+                                   append_Features(
+                                           single_Features(method(out_string, single_Formals(formal(arg, Str)),
+                                                                  SELF_TYPE, no_expr())),
+                                           single_Features(method(out_int, single_Formals(formal(arg, Int)),
+                                                                  SELF_TYPE, no_expr()))),
+                                   single_Features(method(in_string, nil_Formals(), Str, no_expr()))),
+                           single_Features(method(in_int, nil_Formals(), Int, no_expr()))),
+                   filename);
     IO_class->get_method_symtab()->addid(out_string, SELF_TYPE);
     IO_class->get_method_symtab()->addid(out_int, SELF_TYPE);
     IO_class->get_method_symtab()->addid(in_string, Str);
@@ -233,10 +233,10 @@ void ClassTable::install_basic_classes() {
     // "val" for the integer.
     //
     Int_class =
-	class_(Int,
-	       Object,
-	       single_Features(attr(val, prim_slot, no_expr())),
-	       filename);
+            class_(Int,
+                   Object,
+                   single_Features(attr(val, prim_slot, no_expr())),
+                   filename);
     Int_class->get_attr_symtab()->addid(val, prim_slot);
     Int_class->get_attr_symtab()->addid(self, SELF_TYPE);
 
@@ -244,7 +244,7 @@ void ClassTable::install_basic_classes() {
     // Bool also has only the "val" slot.
     //
     Bool_class =
-	class_(Bool, Object, single_Features(attr(val, prim_slot, no_expr())),filename);
+            class_(Bool, Object, single_Features(attr(val, prim_slot, no_expr())), filename);
     Bool_class->get_attr_symtab()->addid(val, prim_slot);
     Bool_class->get_attr_symtab()->addid(self, SELF_TYPE);
 
@@ -257,25 +257,25 @@ void ClassTable::install_basic_classes() {
     //       substr(arg: Int, arg2: Int): Str     substring selection
     //
     Str_class =
-	class_(Str,
-	       Object,
-	       append_Features(
-			       append_Features(
-					       append_Features(
-							       append_Features(
-									       single_Features(attr(val, Int, no_expr())),
-									       single_Features(attr(str_field, prim_slot, no_expr()))),
-							       single_Features(method(length, nil_Formals(), Int, no_expr()))),
-					       single_Features(method(concat,
-								      single_Formals(formal(arg, Str)),
-								      Str,
-								      no_expr()))),
-			       single_Features(method(substr,
-						      append_Formals(single_Formals(formal(arg, Int)),
-								     single_Formals(formal(arg2, Int))),
-						      Str,
-						      no_expr()))),
-	       filename);
+            class_(Str,
+                   Object,
+                   append_Features(
+                           append_Features(
+                                   append_Features(
+                                           append_Features(
+                                                   single_Features(attr(val, Int, no_expr())),
+                                                   single_Features(attr(str_field, prim_slot, no_expr()))),
+                                           single_Features(method(length, nil_Formals(), Int, no_expr()))),
+                                   single_Features(method(concat,
+                                                          single_Formals(formal(arg, Str)),
+                                                          Str,
+                                                          no_expr()))),
+                           single_Features(method(substr,
+                                                  append_Formals(single_Formals(formal(arg, Int)),
+                                                                 single_Formals(formal(arg2, Int))),
+                                                  Str,
+                                                  no_expr()))),
+                   filename);
     Str_class->get_attr_symtab()->addid(val, Int);
     Str_class->get_attr_symtab()->addid(str_field, prim_slot);
     Str_class->get_method_symtab()->addid(length, Int);
@@ -299,24 +299,21 @@ void ClassTable::install_basic_classes() {
 //
 ///////////////////////////////////////////////////////////////////
 
-ostream& ClassTable::semant_error(Class_ c)
-{
-    return semant_error(c->get_filename(),c);
+ostream &ClassTable::semant_error(Class_ c) {
+    return semant_error(c->get_filename(), c);
 }
 
-ostream& ClassTable::semant_error(Symbol filename, tree_node *t)
-{
+ostream &ClassTable::semant_error(Symbol filename, tree_node *t) {
     error_stream << filename << ":" << t->get_line_number() << ": ";
     return semant_error();
 }
 
-ostream& ClassTable::semant_error()
-{
+ostream &ClassTable::semant_error() {
     semant_errors++;
     return error_stream;
 }
 
-void ClassTable::semant_error(Class_ c, tree_node* t, char* err_msg) {
+void ClassTable::semant_error(Class_ c, tree_node *t, char *err_msg) {
     cerr << c->get_filename() << ":" << t->get_line_number() << ": ";
     cerr << err_msg << endl;
     semant_errors_++;
@@ -345,8 +342,7 @@ Symbol ClassTable::lub(Symbol s1, Symbol s2, Symbol c) {
      errors. Part 2) can be done in a second stage, when you want
      to build mycoolc.
  */
-void program_class::semant()
-{
+void program_class::semant() {
     initialize_constants();
 
     /* ClassTable constructor may do some semantic analysis */
@@ -355,8 +351,8 @@ void program_class::semant()
     /* some semantic analysis code may go here */
 
     if (classtable->errors()) {
-	cerr << "Compilation halted due to static semantic errors." << endl;
-	exit(1);
+        cerr << "Compilation halted due to static semantic errors." << endl;
+        exit(1);
     }
 }
 
