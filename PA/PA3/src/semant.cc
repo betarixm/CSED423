@@ -140,12 +140,39 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
 
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
         Class_ c = classes->nth(i);
+
         // TODO: Detect undefined parent class
+        Symbol parent = c->get_parent();
+        while (parent != No_class) {
+            if ((c->get_name() == parent) || (m.count(parent) == 0)) {
+                semant_errors += 1;
+                break;
+            } else {
+                parent = m[parent]->get_parent();
+            }
+        }
+
         // TODO: Cannot inherit from SELF_TYPE
+        semant_errors += (c->get_parent() == SELF_TYPE);
     }
 
-    // TODO: detect class redefinition
-    // TODO: check if Main class exists
+    bool is_main_exists = false;
+
+    for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
+        Class_ c = classes->nth(i);
+
+        // TODO: check if Main class exists
+        if (c->get_name() == Main) {
+            is_main_exists = true;
+        }
+
+        // TODO: detect class redefinition
+        if (m[c->get_name()] != c) {
+            semant_errors += 1;
+        }
+    }
+
+    semant_errors += (!is_main_exists);
 
     // Save scope for each class
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
@@ -158,6 +185,8 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
             Feature f = fl->nth(j);
 
             // TODO
+            cool::SymbolTable<Symbol, Entry> *symtab = f->is_attr() ? c->get_attr_symtab() : c->get_method_symtab();
+            symtab->addid(f->get_name(), f->get_type());
         }
     }
 
