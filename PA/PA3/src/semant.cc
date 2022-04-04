@@ -144,8 +144,13 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
         // TODO: Detect undefined parent class
         Symbol parent = c->get_parent();
         while (parent != No_class) {
-            if ((c->get_name() == parent) || (m.count(parent) == 0)) {
-                semant_errors += 1;
+            if (c->get_name() == parent) {
+                ostream &err_stream = semant_error(c);
+                err_stream << "Class " << c << " inherits from itself.\n";
+                break;
+            } else if (m.count(parent) == 0) {
+                ostream &err_stream = semant_error(c);
+                err_stream << "Class " << c << " inherits from undefined class " << parent << ".\n";
                 break;
             } else {
                 parent = m[parent]->get_parent();
@@ -153,7 +158,10 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
         }
 
         // TODO: Cannot inherit from SELF_TYPE
-        semant_errors += (c->get_parent() == SELF_TYPE);
+        if (c->get_parent() == SELF_TYPE) {
+            ostream &err_stream = semant_error();
+            err_stream << "Class " << c->get_name() << " cannot inherit class " << c->get_parent() << ".\n";
+        }
     }
 
     bool is_main_exists = false;
@@ -168,11 +176,15 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
 
         // TODO: detect class redefinition
         if (m[c->get_name()] != c) {
-            semant_errors += 1;
+            ostream& err_stream = semant_error(c);
+            err_stream << "Class " << c->get_name() << " has already been defined.\n";
         }
     }
 
-    semant_errors += (!is_main_exists);
+    if (!is_main_exists) {
+        ostream &err_stream = semant_error();
+        err_stream << "Class Main is not defined.\n";
+    }
 
     // Save scope for each class
     for (int i = classes->first(); classes->more(i); i = classes->next(i)) {
