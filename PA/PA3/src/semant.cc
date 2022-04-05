@@ -541,9 +541,8 @@ Symbol object_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
         this->set_type(*o->lookup(this->name));
     } else {
         this->set_type(Object);
-        ct->semant_error(current_class->get_filename(), this) << "The referenced object " << name
-                                                              << " is undefined in relevant scopes."
-                                                              << std::endl;
+        ct->semant_error(current_class->get_filename(), this) << "Undeclared identifier "
+                                                              << name << "." << std::endl;
     }
 
     return this->get_type();
@@ -566,7 +565,7 @@ Symbol new__class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curre
         this->set_type(this->type_name);
     } else {
         this->set_type(Object);
-        ct->semant_error(current_class->get_filename(), this) << "Tried to instantiate an object of undefined type: "
+        ct->semant_error(current_class->get_filename(), this) << "'new' used with undefined class "
                                                               << type_name << "."
                                                               << std::endl;
     }
@@ -596,9 +595,9 @@ Symbol leq_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curren
     } else {
         this->set_type(Object);
         ct->semant_error(current_class->get_filename(), this)
-                << "Expected both arguments of operator <= to be of type Int"
-                << " but got arguments of types " << e1_type << " and " << e2_type << "."
-                << std::endl;
+                << "non-Int arguments: "
+                << e1_type << " <= "
+                << e2_type << std::endl;
     }
     return this->get_type();
 }
@@ -625,9 +624,9 @@ Symbol lt_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ current
     } else {
         this->set_type(Object);
         ct->semant_error(current_class->get_filename(), this)
-                << "Expected both arguments of operator < to be of type Int"
-                << " but got arguments of types " << e1_type << " and " << e2_type << "."
-                << std::endl;
+                << "non-Int arguments: "
+                << e1_type << " < "
+                << e2_type << std::endl;
     }
     return this->get_type();
 }
@@ -639,9 +638,8 @@ Symbol neg_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curren
         this->set_type(Int);
     } else {
         this->set_type(Object);
-        ct->semant_error(current_class->get_filename(), this) << "Argument of the operator '~' has type " << e1_type
-                                                              << " instead of Int."
-                                                              << std::endl;
+        ct->semant_error(current_class->get_filename(), this) << "Argument of '~' has type "
+                                                              << e1_type << " instead of Int." << std::endl;
     }
 
     return this->get_type();
@@ -657,9 +655,9 @@ Symbol divide_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
         this->set_type(Object);
 
         ct->semant_error(current_class->get_filename(), this)
-                << "Expected both arguments of operator / to be of type Int"
-                << " but got arguments of types " << e1_type << " and " << e2_type << "."
-                << std::endl;
+                << "non-Int arguments: "
+                << e1_type << " / "
+                << e2_type << std::endl;
     }
 
     return this->get_type();
@@ -675,9 +673,9 @@ Symbol mul_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curren
         this->set_type(Object);
 
         ct->semant_error(current_class->get_filename(), this)
-                << "Expected both arguments of operator * to be of type Int"
-                << " but got arguments of types " << e1_type << " and " << e2_type << "."
-                << std::endl;
+                << "non-Int arguments: "
+                << e1_type << " * "
+                << e2_type << std::endl;
     }
 
     return this->get_type();
@@ -693,9 +691,9 @@ Symbol sub_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curren
         this->set_type(Object);
 
         ct->semant_error(current_class->get_filename(), this)
-                << "Expected both arguments of operator - to be of type Int"
-                << " but got arguments of types " << e1_type << " and " << e2_type << "."
-                << std::endl;
+                << "non-Int arguments: "
+                << e1_type << " - "
+                << e2_type << std::endl;
     }
 
     return this->get_type();
@@ -711,9 +709,9 @@ Symbol plus_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curre
         this->set_type(Object);
 
         ct->semant_error(current_class->get_filename(), this)
-                << "Expected both arguments of operator + to be of type Int"
-                << " but got arguments of types " << e1_type << " and " << e2_type << "."
-                << std::endl;
+                << "non-Int arguments: "
+                << e1_type << " + "
+                << e2_type << std::endl;
     }
 
     return this->get_type();
@@ -726,14 +724,14 @@ Symbol let_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curren
         ct->semant_error(current_class->get_filename(), this) << "'self' cannot be bound in a 'let' expression."
                                                               << std::endl;
     } else if (this->type_decl != SELF_TYPE && ct->symbol_class_map()->count(this->type_decl) == 0) {
-        ct->semant_error(current_class->get_filename(), this) << "Type " << this->type_decl
+        ct->semant_error(current_class->get_filename(), this) << "Class " << this->type_decl
                                                               << " of let-bound identifier "
                                                               << this->identifier
                                                               << " is undefined." << std::endl;
     } else if (init_type != No_type && !ct->is_child(init_type, this->type_decl, current_class)) {
         ct->semant_error(current_class->get_filename(), this) << "Inferred type " << init_type
-                                                              << " in initialization of " << this->identifier
-                                                              << " is not compatible with identifier's declared type "
+                                                              << " of initialization of " << this->identifier
+                                                              << " does not conform to identifier's declared type "
                                                               << this->type_decl << "."
                                                               << std::endl;
     } else {
@@ -787,10 +785,24 @@ Symbol typcase_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cu
                                             << " in case statement." << std::endl;
         } else {
             branch_decl_types.insert(branch->get_type_decl());
+
+            o->enterscope();
+
+            if (branch->get_name() == self) {
+                ct->semant_error(current_class) << "'self' bound in 'case'." << std::endl;
+            }
+
+            if (branch->get_type_decl() == SELF_TYPE) {
+                ct->semant_error(current_class) << "Identifier " << branch->get_name()
+                                                << " declared with type SELF_TYPE in case branch." << std::endl;
+            }
+
+            o->addid(branch->get_name(), new Symbol(branch->get_type_decl()));
             branch_types.push_back(branch->check_type(o, current_class, ct));
+
+            o->exitscope();
         }
     }
-
     if (!branch_types.empty()) {
         branch_type = branch_types[0];
         for (const auto &b: branch_types) {
@@ -811,9 +823,7 @@ Symbol loop_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curre
     if (pred_type == Bool) {
 
     } else {
-        ct->semant_error(current_class->get_filename(), this) << "Expected the predicate of while to be of type Bool"
-                                                              << " but got the predicate of type " << pred_type
-                                                              << " instead ." << std::endl;
+        ct->semant_error(current_class->get_filename(), this) << "Loop condition does not have type Bool." << std::endl;
     }
 
     return this->get_type();
@@ -827,9 +837,8 @@ Symbol cond_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curre
     if (pred_type == Bool) {
 
     } else {
-        ct->semant_error(current_class->get_filename(), this) << "Expected the predicate of if to be of type Bool"
-                                                              << " but got the predicate of type " << pred_type
-                                                              << " instead ." << std::endl;
+        ct->semant_error(current_class->get_filename(), this) << "Predicate of 'if' does not have type Bool."
+                                                              << std::endl;
     }
 
     this->set_type(ct->lca(then_exp_type, else_exp_type, current_class));
@@ -911,12 +920,12 @@ Symbol dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ c
             if (!ct->is_child(call_arg_type, decl_arg->get_type(), current_class)) {
                 this->set_type(Object);
                 error_count += 1;
-                ct->semant_error(current_class->get_filename(), this) << "In the call of the method "
+                ct->semant_error(current_class->get_filename(), this) << "In call of the method "
                                                                       << method->get_name()
                                                                       << ", type " << call_arg_type
-                                                                      << " of provided argument "
+                                                                      << " of parameter "
                                                                       << decl_arg->get_name()
-                                                                      << " is not compatible with the corresponding signature type "
+                                                                      << " does not conform to declared type "
                                                                       << decl_arg->get_type() << "." << std::endl;
             }
         }
@@ -934,7 +943,10 @@ Symbol static_dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, C
 
     method_class *method = ct->get_method(expr_type, this->name, current_class);
 
-    if (ct->symbol_class_map()->count(this->type_name) == 0) {
+    if (this->type_name == SELF_TYPE) {
+        this->set_type(Object);
+        ct->semant_error(current_class->get_filename(), this) << "Static dispatch to SELF_TYPE." << std::endl;
+    } else if (ct->symbol_class_map()->count(this->type_name) == 0) {
         this->set_type(Object);
         ct->semant_error(current_class->get_filename(), this) << "Static dispatch on undefined class "
                                                               << this->type_name << "." << std::endl;
@@ -945,7 +957,7 @@ Symbol static_dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, C
     } else {
         if (!ct->is_child(expr_type, this->type_name, current_class)) {
             ct->semant_error(current_class->get_filename(), this) << "Expression type " << expr_type
-                                                                  << " is not compatible with declared static dispatch type "
+                                                                  << " does not conform to declared static dispatch type "
                                                                   << this->type_name << "." << std::endl;
         }
 
@@ -965,7 +977,7 @@ Symbol static_dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, C
         if (call_method_argc != decl_method_argc) {
             this->set_type(Object);
             ct->semant_error(current_class->get_filename(), this)
-                    << "Method " << method->get_name() << " called with wrong number of arguments." << std::endl;
+                    << "Method " << method->get_name() << " invoked with wrong number of arguments." << std::endl;
         }
 
         for (int decl_idx = decl_method_argv->first(), call_idx = call_method_argv->first();
@@ -982,9 +994,9 @@ Symbol static_dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, C
                 ct->semant_error(current_class->get_filename(), this) << "In the call of the method "
                                                                       << method->get_name()
                                                                       << ", type " << call_arg_type
-                                                                      << " of provided argument "
+                                                                      << " of parameter "
                                                                       << decl_arg->get_name()
-                                                                      << " is not compatible with the corresponding signature type "
+                                                                      << " does not conform to declared type "
                                                                       << decl_arg->get_type() << "." << std::endl;
             }
         }
@@ -1002,10 +1014,10 @@ Symbol assign_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
 
     if (this->name == self) {
         this->set_type(Object);
-        ct->semant_error(current_class->get_filename(), this) << "Cannot assign to 'self'" << "." << std::endl;
+        ct->semant_error(current_class->get_filename(), this) << "Cannot assign to 'self'." << std::endl;
     } else if (!name_type) {
         this->set_type(Object);
-        ct->semant_error(current_class->get_filename(), this) << "Tried to assign undeclared identifier " << this->name
+        ct->semant_error(current_class->get_filename(), this) << "Assignment to undeclared variable " << this->name
                                                               << "." << std::endl;
     } else {
         Symbol expr_type = this->expr->check_type(o, current_class, ct);
@@ -1014,10 +1026,12 @@ Symbol assign_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
             this->set_type(expr_type);
         } else {
             this->set_type(Object);
-            ct->semant_error(current_class->get_filename(), this) << "The identifier " << this->name
-                                                                  << " has been declared as " << *name_type
-                                                                  << " but assigned with incompatible type "
-                                                                  << expr_type << "." << std::endl;
+            ct->semant_error(current_class->get_filename(), this) << "Type "
+                                                                  << expr_type
+                                                                  << " of assigned expression does not conform to declared type "
+                                                                  << *name_type
+                                                                  << " of identifier "
+                                                                  << this->name << "." << std::endl;
         }
     }
 
@@ -1028,6 +1042,14 @@ Symbol method_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
     o->enterscope();
     {
         std::set<Symbol> argv;
+
+        if ((!(is_primitive(this->return_type) || this->return_type == SELF_TYPE)) &&
+            ct->symbol_class_map()->count(this->return_type) == 0) {
+            ct->semant_error(current_class->get_filename(), this) << "Undefined return type "
+                                                                  << this->return_type
+                                                                  << " in method "
+                                                                  << this->name << "." << endl;
+        }
 
         for (int i = this->formals->first(); this->formals->more(i); i = formals->next(i)) {
             Formal _arg = formals->nth(i);
@@ -1048,7 +1070,7 @@ Symbol method_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
                                                                           << " in the signature of method "
                                                                           << get_name()
                                                                           << " has undefined type " << _arg->get_type()
-                                                                          << " ."
+                                                                          << "."
                                                                           << std::endl;
                 } else {
                     o->addid(_arg->get_name(), new Symbol(_arg->get_type()));
@@ -1060,7 +1082,7 @@ Symbol method_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
 
         if (!ct->is_child(expr_type, this->get_return_type(), current_class)) {
             ct->semant_error(current_class->get_filename(), this) << "Inferred return type " << expr_type
-                                                                  << " of the method "
+                                                                  << " of method "
                                                                   << this->get_name()
                                                                   << " does not conform to declared return type "
                                                                   << this->get_return_type() << "." << std::endl;
@@ -1080,16 +1102,17 @@ Symbol attr_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curre
     } else if (this->get_name() == self) {
         ct->semant_error(current_class->get_filename(), this) << "'self' cannot be the name of an attribute."
                                                               << std::endl;
-    } else if (ct->symbol_class_map()->count(this->get_type()) == 0) {
-        ct->semant_error(current_class->get_filename(), this->get_init_expr()) << "The attribute " << this->get_name()
-                                                                               << " is defined as " << this->get_type()
-                                                                               << " but type " << this->get_type()
-                                                                               << " is undefined." << std::endl;
+    } else if (ct->symbol_class_map()->count(this->type_decl) == 0) {
+        ct->semant_error(current_class->get_filename(), this->get_init_expr()) << "Class " << this->type_decl
+                                                                               << " of attribute " << this->name
+                                                                               << " is undefined." << endl;
     } else if (!ct->is_child(init_expr_type, this->get_type(), current_class)) {
-        ct->semant_error(current_class->get_filename(), this->get_init_expr()) << "The attribute " << this->get_name()
-                                                                               << " is defined as " << this->get_type()
-                                                                               << " but is initialized with "
-                                                                               << init_expr_type << "." << std::endl;
+        ct->semant_error(current_class->get_filename(), this->get_init_expr()) << "Inferred type "
+                                                                               << this->init->get_type()
+                                                                               << " of initialization of attribute "
+                                                                               << this->name
+                                                                               << " does not conform to declared type "
+                                                                               << this->type_decl << "." << endl;
     }
     return this->get_type();
 }

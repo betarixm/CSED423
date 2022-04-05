@@ -139,8 +139,8 @@ typedef Cases_class *Cases;
     Symbol get_type() { return type;}     \
     void set_type(Symbol s) {type = s;}   \
     Symbol get_type_decl() {return type_decl;} \
-    Symbol check_type(cool::SymbolTable<Symbol, Symbol>* o, Class_ current_class, ClassTable *ct);
-
+    Symbol check_type(cool::SymbolTable<Symbol, Symbol>* o, Class_ current_class, ClassTable *ct); \
+    Symbol get_name() {return name;}
 
 #define Expression_EXTRAS          \
     virtual Symbol check_type(cool::SymbolTable<Symbol, Symbol>* o, Class_ current_class, ClassTable *ct) = 0;\
