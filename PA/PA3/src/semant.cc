@@ -87,7 +87,7 @@ static void initialize_constants(void) {
 }
 
 bool is_primitive(Symbol class_name) {
-    return class_name == Object || class_name == IO || class_name == Bool || class_name == Str;
+    return class_name == Object || class_name == IO || class_name == Bool || class_name == Str || class_name == Int;
 }
 
 ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
@@ -105,7 +105,7 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
         if (this->symbol_class_map()->count(c_name) > 0) {
             this->semant_error(c) << "Class " << c->get_name() << " was previously defined." << std::endl;
         } else if (is_primitive(c_name)) {
-            this->semant_error(c) << "Redefinition of " << c->get_name() << " is not allowed." << std::endl;
+            this->semant_error(c) << "Redefinition of basic class " << c->get_name() << "." << std::endl;
         } else {
             this->add_class(c_name, c);
         }
