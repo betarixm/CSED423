@@ -104,7 +104,7 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
 
         if (this->symbol_class_map()->count(c_name) > 0) {
             this->semant_error(c) << "Class " << c->get_name() << " was previously defined." << std::endl;
-        } else if (c_name == SELF_TYPE) {
+        } else if (is_primitive(c_name)) {
             this->semant_error(c) << "Redefinition of " << c->get_name() << " is not allowed." << std::endl;
         } else {
             this->add_class(c_name, c);
