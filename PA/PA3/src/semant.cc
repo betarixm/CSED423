@@ -143,10 +143,15 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
                 break;
             } else if (this->symbol_class_map()->count(parent_name) == 0) {
                 this->semant_error((*this->symbol_class_map())[child_name]) << "Class " << child_name
-                                                                            << " cannot inherit from an undefined class "
+                                                                            << " inherits from an undefined class "
                                                                             << parent_name
                                                                             << ".\n";
                 break;
+            } else if (child_name == parent_name) {
+                this->semant_error((*this->symbol_class_map())[child_name]) << "Class " << child_name
+                                                                            << ", or an ancestor of " << parent_name <<
+                                                                            ", is involved in an inheritance cycle."
+                                                                            << std::endl;
             } else {
                 parent_name = this->parent_map[parent_name];
             }
@@ -474,6 +479,13 @@ void program_class::semant() {
 
                 for (int _ = _tester_method_argv->first();
                      _tester_method_argv->more(_); _ = _tester_method_argv->next(_), _tester_method_argc++);
+
+                if (_parent_method->get_return_type() != _method->get_return_type()) {
+                    classtable->semant_error(c) << "In redefined method " << _method_name <<
+                                                ", return type " << _method->get_return_type() <<
+                                                " is different from original return type " <<
+                                                _parent_method->get_return_type() << "." << endl;
+                }
 
                 if (_parent_method_argc != _tester_method_argc) {
                     classtable->semant_error(c) << "Incompatible number of formal parameters in redefined method "
