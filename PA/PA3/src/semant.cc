@@ -823,29 +823,27 @@ Symbol typcase_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cu
 Symbol loop_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ current_class, ClassTable *ct) {
     Symbol pred_type = this->pred->check_type(o, current_class, ct);
 
+    if (pred_type != Bool) {
+        ct->semant_error(current_class->get_filename(), this) << "Loop condition does not have type Bool." << std::endl;
+    }
+
     this->body->check_type(o, current_class, ct);
     this->set_type(Object);
 
-    if (pred_type == Bool) {
-
-    } else {
-        ct->semant_error(current_class->get_filename(), this) << "Loop condition does not have type Bool." << std::endl;
-    }
 
     return this->get_type();
 }
 
 Symbol cond_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ current_class, ClassTable *ct) {
     Symbol pred_type = this->pred->check_type(o, current_class, ct);
-    Symbol then_exp_type = this->then_exp->check_type(o, current_class, ct);
-    Symbol else_exp_type = this->else_exp->check_type(o, current_class, ct);
 
-    if (pred_type == Bool) {
-
-    } else {
+    if (pred_type != Bool) {
         ct->semant_error(current_class->get_filename(), this) << "Predicate of 'if' does not have type Bool."
                                                               << std::endl;
     }
+
+    Symbol then_exp_type = this->then_exp->check_type(o, current_class, ct);
+    Symbol else_exp_type = this->else_exp->check_type(o, current_class, ct);
 
     this->set_type(ct->lca(then_exp_type, else_exp_type, current_class));
 
@@ -901,8 +899,6 @@ Symbol dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ c
 
         int decl_method_argc = 0;
 
-        int error_count = 0;
-
         for (int i = decl_method_argv->first();
              decl_method_argv->more(i); i = decl_method_argv->next(i), ++decl_method_argc);
 
@@ -920,7 +916,6 @@ Symbol dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ c
                 Symbol call_arg_type = call_arg->check_type(o, current_class, ct);
 
                 if (!ct->is_child(call_arg_type, decl_arg->get_type(), current_class)) {
-                    error_count += 1;
                     ct->semant_error(current_class->get_filename(), this) << "In call of the method "
                                                                           << method->get_name()
                                                                           << ", type " << call_arg_type
@@ -954,56 +949,47 @@ Symbol static_dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, C
         this->set_type(Object);
         ct->semant_error(current_class->get_filename(), this) << "Static dispatch to undefined method " << this->name
                                                               << "." << std::endl;
+    } else if (!ct->is_child(expr_type, this->type_name, current_class)) {
+        ct->semant_error(current_class->get_filename(), this) << "Expression type " << expr_type
+                                                              << " does not conform to declared static dispatch type "
+                                                              << this->type_name << "." << std::endl;
     } else {
-        if (!ct->is_child(expr_type, this->type_name, current_class)) {
-            ct->semant_error(current_class->get_filename(), this) << "Expression type " << expr_type
-                                                                  << " does not conform to declared static dispatch type "
-                                                                  << this->type_name << "." << std::endl;
-        }
 
         Formals decl_method_argv = method->get_formals();
         Expressions call_method_argv = this->actual;
 
-        int decl_method_argc = 0, call_method_argc = 0;
-
-        int error_count = 0;
+        int decl_method_argc = 0;
 
         for (int i = decl_method_argv->first();
              decl_method_argv->more(i); i = decl_method_argv->next(i), ++decl_method_argc);
 
-        for (int i = call_method_argv->first();
-             call_method_argv->more(i); i = call_method_argv->next(i), ++call_method_argc);
-
-        if (call_method_argc != decl_method_argc) {
+        if (call_method_argv->len() != decl_method_argc) {
             this->set_type(Object);
             ct->semant_error(current_class->get_filename(), this)
                     << "Method " << method->get_name() << " invoked with wrong number of arguments." << std::endl;
-        }
+        } else {
+            for (int decl_idx = decl_method_argv->first(), call_idx = call_method_argv->first();
+                 decl_method_argv->more(decl_idx) && call_method_argv->more(call_idx);
+                 decl_idx = decl_method_argv->next(decl_idx), call_idx = call_method_argv->next(call_idx)) {
+                Formal decl_arg = decl_method_argv->nth(decl_idx);
+                Expression call_arg = call_method_argv->nth(call_idx);
 
-        for (int decl_idx = decl_method_argv->first(), call_idx = call_method_argv->first();
-             decl_method_argv->more(decl_idx) && call_method_argv->more(call_idx);
-             decl_idx = decl_method_argv->next(decl_idx), call_idx = call_method_argv->next(call_idx)) {
-            Formal decl_arg = decl_method_argv->nth(decl_idx);
-            Expression call_arg = call_method_argv->nth(call_idx);
+                Symbol call_arg_type = call_arg->check_type(o, current_class, ct);
 
-            Symbol call_arg_type = call_arg->check_type(o, current_class, ct);
-
-            if (!ct->is_child(call_arg_type, decl_arg->get_type(), current_class)) {
-                this->set_type(Object);
-                error_count += 1;
-                ct->semant_error(current_class->get_filename(), this) << "In the call of the method "
-                                                                      << method->get_name()
-                                                                      << ", type " << call_arg_type
-                                                                      << " of parameter "
-                                                                      << decl_arg->get_name()
-                                                                      << " does not conform to declared type "
-                                                                      << decl_arg->get_type() << "." << std::endl;
+                if (!ct->is_child(call_arg_type, decl_arg->get_type(), current_class)) {
+                    ct->semant_error(current_class->get_filename(), this) << "In the call of the method "
+                                                                          << method->get_name()
+                                                                          << ", type " << call_arg_type
+                                                                          << " of parameter "
+                                                                          << decl_arg->get_name()
+                                                                          << " does not conform to declared type "
+                                                                          << decl_arg->get_type() << "." << std::endl;
+                }
             }
         }
 
-        if (error_count == 0) {
-            this->set_type(method->get_return_type() == SELF_TYPE ? expr_type : method->get_return_type());
-        }
+        this->set_type(method->get_return_type() == SELF_TYPE ? expr_type : method->get_return_type());
+
     }
 
     return this->get_type();
