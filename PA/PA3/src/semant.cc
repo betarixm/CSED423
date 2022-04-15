@@ -608,7 +608,8 @@ Symbol eq_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ current
 
     this->set_type(Bool);
 
-    if ((e1_type == Int || e1_type == Str || e1_type == Bool) && e1_type != e2_type) {
+    if ((e1_type == Int || e2_type == Int || e1_type == Str || e2_type == Str || e1_type == Bool || e2_type == Bool) &&
+        e1_type != e2_type) {
         ct->semant_error(current_class->get_filename(), this) << "Illegal comparison with a basic type." << std::endl;
     }
 
@@ -720,19 +721,24 @@ Symbol plus_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ curre
 Symbol let_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ current_class, ClassTable *ct) {
     Symbol init_type = this->init->check_type(o, current_class, ct);
 
-    if (identifier == self) {
-        ct->semant_error(current_class->get_filename(), this) << "'self' cannot be bound in a 'let' expression."
-                                                              << std::endl;
-    } else if (this->type_decl != SELF_TYPE && ct->symbol_class_map()->count(this->type_decl) == 0) {
+
+    if (this->type_decl != SELF_TYPE && ct->symbol_class_map()->count(this->type_decl) == 0) {
         ct->semant_error(current_class->get_filename(), this) << "Class " << this->type_decl
                                                               << " of let-bound identifier "
                                                               << this->identifier
                                                               << " is undefined." << std::endl;
-    } else if (init_type != No_type && !ct->is_child(init_type, this->type_decl, current_class)) {
+    }
+
+    if (init_type != No_type && !ct->is_child(init_type, this->type_decl, current_class)) {
         ct->semant_error(current_class->get_filename(), this) << "Inferred type " << init_type
                                                               << " of initialization of " << this->identifier
                                                               << " does not conform to identifier's declared type "
                                                               << this->type_decl << "."
+                                                              << std::endl;
+    }
+
+    if (identifier == self) {
+        ct->semant_error(current_class->get_filename(), this) << "'self' cannot be bound in a 'let' expression."
                                                               << std::endl;
     } else {
         o->enterscope();
@@ -893,46 +899,40 @@ Symbol dispatch_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ c
         Formals decl_method_argv = method->get_formals();
         Expressions call_method_argv = this->actual;
 
-        int decl_method_argc = 0, call_method_argc = 0;
+        int decl_method_argc = 0;
 
         int error_count = 0;
 
         for (int i = decl_method_argv->first();
              decl_method_argv->more(i); i = decl_method_argv->next(i), ++decl_method_argc);
 
-        for (int i = call_method_argv->first();
-             call_method_argv->more(i); i = call_method_argv->next(i), ++call_method_argc);
-
-        if (call_method_argc != decl_method_argc) {
+        if (call_method_argv->len() != decl_method_argc) {
             this->set_type(Object);
             ct->semant_error(current_class->get_filename(), this)
                     << "Method " << method->get_name() << " called with wrong number of arguments." << std::endl;
-        }
+        } else {
+            for (int decl_idx = decl_method_argv->first(), call_idx = call_method_argv->first();
+                 decl_method_argv->more(decl_idx) && call_method_argv->more(call_idx);
+                 decl_idx = decl_method_argv->next(decl_idx), call_idx = call_method_argv->next(call_idx)) {
+                Formal decl_arg = decl_method_argv->nth(decl_idx);
+                Expression call_arg = call_method_argv->nth(call_idx);
 
-        for (int decl_idx = decl_method_argv->first(), call_idx = call_method_argv->first();
-             decl_method_argv->more(decl_idx) && call_method_argv->more(call_idx);
-             decl_idx = decl_method_argv->next(decl_idx), call_idx = call_method_argv->next(call_idx)) {
-            Formal decl_arg = decl_method_argv->nth(decl_idx);
-            Expression call_arg = call_method_argv->nth(call_idx);
+                Symbol call_arg_type = call_arg->check_type(o, current_class, ct);
 
-            Symbol call_arg_type = call_arg->check_type(o, current_class, ct);
-
-            if (!ct->is_child(call_arg_type, decl_arg->get_type(), current_class)) {
-                this->set_type(Object);
-                error_count += 1;
-                ct->semant_error(current_class->get_filename(), this) << "In call of the method "
-                                                                      << method->get_name()
-                                                                      << ", type " << call_arg_type
-                                                                      << " of parameter "
-                                                                      << decl_arg->get_name()
-                                                                      << " does not conform to declared type "
-                                                                      << decl_arg->get_type() << "." << std::endl;
+                if (!ct->is_child(call_arg_type, decl_arg->get_type(), current_class)) {
+                    error_count += 1;
+                    ct->semant_error(current_class->get_filename(), this) << "In call of the method "
+                                                                          << method->get_name()
+                                                                          << ", type " << call_arg_type
+                                                                          << " of parameter "
+                                                                          << decl_arg->get_name()
+                                                                          << " does not conform to declared type "
+                                                                          << decl_arg->get_type() << "." << std::endl;
+                }
             }
         }
 
-        if (error_count == 0) {
-            this->set_type(method->get_return_type() == SELF_TYPE ? expr_checked_type : method->get_return_type());
-        }
+        this->set_type(method->get_return_type() == SELF_TYPE ? expr_checked_type : method->get_return_type());
     }
 
     return this->get_type();
@@ -1013,26 +1013,25 @@ Symbol assign_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
     Symbol *name_type = o->lookup(this->name);
 
     if (this->name == self) {
-        this->set_type(Object);
         ct->semant_error(current_class->get_filename(), this) << "Cannot assign to 'self'." << std::endl;
-    } else if (!name_type) {
-        this->set_type(Object);
+    }
+
+    if (!name_type) {
         ct->semant_error(current_class->get_filename(), this) << "Assignment to undeclared variable " << this->name
                                                               << "." << std::endl;
-    } else {
-        Symbol expr_type = this->expr->check_type(o, current_class, ct);
+    }
 
-        if (ct->is_child(expr_type, *name_type, current_class)) {
-            this->set_type(expr_type);
-        } else {
-            this->set_type(Object);
-            ct->semant_error(current_class->get_filename(), this) << "Type "
-                                                                  << expr_type
-                                                                  << " of assigned expression does not conform to declared type "
-                                                                  << *name_type
-                                                                  << " of identifier "
-                                                                  << this->name << "." << std::endl;
-        }
+    Symbol expr_type = this->expr->check_type(o, current_class, ct);
+    this->set_type(expr_type);
+    if (ct->is_child(expr_type, *name_type, current_class)) {
+
+    } else {
+        ct->semant_error(current_class->get_filename(), this) << "Type "
+                                                              << expr_type
+                                                              << " of assigned expression does not conform to declared type "
+                                                              << *name_type
+                                                              << " of identifier "
+                                                              << this->name << "." << std::endl;
     }
 
     return this->get_type();
@@ -1055,23 +1054,23 @@ Symbol method_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cur
             Formal _arg = formals->nth(i);
 
             if (_arg->get_name() == self) {
-                ct->semant_error(current_class->get_filename(), _arg)
-                        << "'self' cannot be the name of a method argument." << std::endl;
+                // ct->semant_error(current_class->get_filename(), _arg)
+                //        << "'self' cannot be the name of a method argument." << std::endl;
             } else if (argv.count(_arg->get_name()) > 0) {
-                ct->semant_error(current_class->get_filename(), _arg) << "The argument " << _arg->get_name()
-                                                                      << " in the signature of method "
-                                                                      << this->get_name()
-                                                                      << " has already been defined." << std::endl;
+                // ct->semant_error(current_class->get_filename(), _arg) << "The argument " << _arg->get_name()
+                //                                                       << " in the signature of method "
+                //                                                       << this->get_name()
+                //                                                       << " has already been defined." << std::endl;
             } else {
-                argv.insert(_arg->get_name());
+                // argv.insert(_arg->get_name());
 
                 if (ct->symbol_class_map()->count(_arg->get_type()) == 0) {
-                    ct->semant_error(current_class->get_filename(), _arg) << "The argument " << _arg->get_name()
-                                                                          << " in the signature of method "
-                                                                          << get_name()
-                                                                          << " has undefined type " << _arg->get_type()
-                                                                          << "."
-                                                                          << std::endl;
+                    //     ct->semant_error(current_class->get_filename(), _arg) << "The argument " << _arg->get_name()
+                    //                                                           << " in the signature of method "
+                    //                                                           << get_name()
+                    //                                                           << " has undefined type " << _arg->get_type()
+                    //                                                           << "."
+                    //                                                           << std::endl;
                 } else {
                     o->addid(_arg->get_name(), new Symbol(_arg->get_type()));
                 }
