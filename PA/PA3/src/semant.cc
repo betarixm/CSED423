@@ -781,6 +781,8 @@ Symbol typcase_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cu
     std::vector<Symbol> branch_types;
     std::set<Symbol> branch_decl_types;
 
+    this->set_type(No_type);
+
     this->expr->check_type(o, current_class, ct);
 
     for (int i = this->cases->first(); this->cases->more(i); i = cases->next(i)) {
@@ -793,6 +795,11 @@ Symbol typcase_class::check_type(cool::SymbolTable<Symbol, Symbol> *o, Class_ cu
             branch_decl_types.insert(branch->get_type_decl());
 
             o->enterscope();
+
+            if (ct->symbol_class_map()->count(branch->get_type_decl()) == 0) {
+                ct->semant_error(current_class) << "Class " << branch->get_type_decl()
+                                                << " of case branch is undefined." << std::endl;
+            }
 
             if (branch->get_name() == self) {
                 ct->semant_error(current_class) << "'self' bound in 'case'." << std::endl;
