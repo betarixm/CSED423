@@ -103,9 +103,11 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
         Symbol c_name = c->get_name();
 
         if (this->symbol_class_map()->count(c_name) > 0) {
-            this->semant_error(c) << "Class " << c->get_name() << " was previously defined." << std::endl;
-        } else if (is_primitive(c_name)) {
-            this->semant_error(c) << "Redefinition of basic class " << c->get_name() << "." << std::endl;
+            if (is_primitive(c_name)) {
+                this->semant_error(c) << "Redefinition of basic class " << c->get_name() << "." << std::endl;
+            } else {
+                this->semant_error(c) << "Class " << c->get_name() << " was previously defined." << std::endl;
+            }
         } else {
             this->add_class(c_name, c);
         }
