@@ -129,6 +129,12 @@ ClassTable::ClassTable(Classes classes) : semant_errors(0), error_stream(cerr) {
 
     if (!is_main_exists) {
         semant_error() << "Class Main is not defined." << std::endl;
+    } else {
+        if ((*this->method_map())[Main]->count(main_meth) == 0) {
+            classtable->semant_error() << "No 'main' method in class Main." << std::endl;
+        } else if ((*(*this->method_map())[Main])[main_meth]->get_formals()->len() != 0) {
+            semant_error() << "'main' method in class Main should have no arguments." << std::endl;
+        }
     }
 
     for (auto i: this->parent_map) {
