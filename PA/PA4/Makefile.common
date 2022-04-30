@@ -1,0 +1,75 @@
+
+PADIR   = $(LEVEL)
+CS423 = /home/class/csed423
+LLVMDIR = $(CS423)/llvm_bhso/llvm-3.9.0.bin
+LLVMLIBDIR = $(LLVMDIR)/lib
+OPT = opt -O3
+
+LEXER   = /home/class/csed423/cool-ref-binary/lexer
+PARSER  = /home/class/csed423/cool-ref-binary/parser
+SEMANT  = /home/class/csed423/cool-ref-binary/semant
+
+ifdef PA5
+COOLRT  = $(PADIR)/src/coolrt.o
+else
+COOLRT  =
+endif
+
+debug = true
+
+ifeq ($(debug),true)
+    EXTRAFLAGS = -DDEBUG
+    CGENOPTS = -c
+else
+    EXTRAFLAGS =
+    CGENOPTS =
+endif
+
+CPPFLAGS = -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS $(EXTRAFLAGS) \
+	   -I. -I$(PADIR)/cool-support/include
+
+LDFLAGS = -L$(LLVMDIR)/lib
+LDLIBS = 
+
+CXXFLAGS = -g -Wall -Wno-deprecated -Wno-unused -fpermissive -Wno-write-strings
+CXX = $(LLVMDIR)/bin/clang++
+CC =$(LLVMDIR)/bin/clang
+
+%.ast: %.cl
+	$(LEXER) $< | $(PARSER) | $(SEMANT) > $@
+
+%.ll: %.ast
+	$(CGEN) $(CGENOPTS) < $< > $@
+
+%.bc: %.ll
+	llvm-as < $< > $@
+
+%.s: %.bc
+	llc < $< > $@
+
+%.exe: %.s $(COOLRT)
+	$(CC) -g $+ -o $@
+
+%.verify: %.bc
+	$(OPT) -verify $< | llvm-dis > $@
+
+%-opt.bc: %.bc
+	$(OPT) -basicaa -instcombine -simplifycfg -scalarrepl-ssa -early-cse -jump-threading \
+	-reassociate -loop-simplify -loop-rotate -licm -loop-unswitch -instcombine -loop-simplify -loop-deletion \
+	-loop-unroll -gvn -sccp -instcombine -jump-threading -dse -adce -simplifycfg -instcombine \
+	< $< > $*-opt.bc
+
+%-optmax.bc: %.bc
+	$(OPT)  -tbaa -basicaa -globalopt -ipsccp -deadargelim -instcombine -simplifycfg -basiccg -inline \
+	-argpromotion -scalarrepl-ssa -early-cse -simplify-libcalls -jump-threading -correlated-propagation \
+	-simplifycfg -instcombine -tailcallelim -simplifycfg -reassociate -loop-simplify -loop-rotate -licm \
+	-loop-unswitch -instcombine -loop-simplify -loop-idiom -loop-deletion -loop-unroll -gvn -memcpyopt -sccp \
+	-instcombine -jump-threading -dse -adce -simplifycfg -instcombine -strip-dead-prototypes -globaldce -constmerge \
+	< $< > $*-optmax.bc
+
+%.out: %.exe
+	./$< > $@ || true
+
+clean:
+	-rm -f core *.exe *.bc *.ll *.out *.ast *.o *.verify
+	$(CLEAN_LOCAL)
