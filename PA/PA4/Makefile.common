@@ -1,13 +1,12 @@
 
 PADIR   = $(LEVEL)
-CS423 = /home/class/csed423
-LLVMDIR = $(CS423)/llvm_bhso/llvm-3.9.0.bin
+LLVMDIR = $(HOME)/llvm
 LLVMLIBDIR = $(LLVMDIR)/lib
-OPT = opt -O3
+OPT = $(LLVMDIR)/bin/opt -O3
 
-LEXER   = /home/class/csed423/cool-ref-binary/lexer
-PARSER  = /home/class/csed423/cool-ref-binary/parser
-SEMANT  = /home/class/csed423/cool-ref-binary/semant
+LEXER   = reference/lexer
+PARSER  = reference/parser
+SEMANT  = reference/semant
 
 ifdef PA5
 COOLRT  = $(PADIR)/src/coolrt.o
@@ -42,16 +41,16 @@ CC =$(LLVMDIR)/bin/clang
 	$(CGEN) $(CGENOPTS) < $< > $@
 
 %.bc: %.ll
-	llvm-as < $< > $@
+	$(LLVMDIR)/bin/llvm-as < $< > $@
 
 %.s: %.bc
-	llc < $< > $@
+	$(LLVMDIR)/bin/llc < $< > $@
 
 %.exe: %.s $(COOLRT)
 	$(CC) -g $+ -o $@
 
 %.verify: %.bc
-	$(OPT) -verify $< | llvm-dis > $@
+	$(OPT) -verify $< | $(LLVMDIR)/bin/llvm-dis > $@
 
 %-opt.bc: %.bc
 	$(OPT) -basicaa -instcombine -simplifycfg -scalarrepl-ssa -early-cse -jump-threading \
