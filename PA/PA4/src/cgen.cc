@@ -953,7 +953,8 @@ operand neg_class::code(CgenEnvironment *env)
 		std::cerr << "neg" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+	return vp.sub(int_value(0), this->e1->code(env));
 }
 
 operand lt_class::code(CgenEnvironment *env)
@@ -962,7 +963,8 @@ operand lt_class::code(CgenEnvironment *env)
 		std::cerr << "lt" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+	return vp.icmp(LT, this->e1->code(env), this->e2->code(env));
 }
 
 operand eq_class::code(CgenEnvironment *env)
@@ -971,7 +973,8 @@ operand eq_class::code(CgenEnvironment *env)
 		std::cerr << "eq" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+	return vp.icmp(EQ, this->e1->code(env), this->e2->code(env));
 }
 
 operand leq_class::code(CgenEnvironment *env)
@@ -980,7 +983,8 @@ operand leq_class::code(CgenEnvironment *env)
 		std::cerr << "leq" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+	return vp.icmp(LE, this->e1->code(env), this->e2->code(env));
 }
 
 operand comp_class::code(CgenEnvironment *env)
@@ -989,7 +993,31 @@ operand comp_class::code(CgenEnvironment *env)
 		std::cerr << "complement" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+
+	operand result_ptr = vp.alloca_mem(op_type{INT1});
+
+	operand e1_code = e1->code(env);
+
+	string branch_true_label = "true";
+	string branch_false_label = "false";
+	string branch_done_label = "done";
+
+	vp.branch_cond(
+		vp.icmp(EQ, e1_code, bool_value(true, true)),
+		branch_true_label,
+		branch_false_label);
+
+	vp.begin_block(branch_true_label);
+	vp.store(int_value(0), result_ptr);
+	vp.branch_uncond(branch_done_label);
+
+	vp.begin_block(branch_false_label);
+	vp.store(int_value(1), result_ptr);
+	vp.branch_uncond(branch_done_label);
+
+	vp.begin_block(branch_done_label);
+	return vp.load(result_ptr.get_type().get_deref_type(), result_ptr);
 }
 
 operand int_const_class::code(CgenEnvironment *env)
