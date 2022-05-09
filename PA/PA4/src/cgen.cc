@@ -577,6 +577,7 @@ void CgenClassTable::code_main()
 	op_type main_retn_type{INT32};
 
 	vp.define(main_retn_type, "main", main_args_v);
+	{
 
 	// Define an entry basic block
 	vp.begin_block("entry");
@@ -612,6 +613,7 @@ void CgenClassTable::code_main()
 #else
 	// Phase 2
 #endif
+	}
 	vp.end_define();
 }
 
