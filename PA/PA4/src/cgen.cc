@@ -1026,7 +1026,7 @@ operand int_const_class::code(CgenEnvironment *env)
 		std::cerr << "Integer Constant" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	return int_value(atoi(this->token->get_string()));
 }
 
 operand bool_const_class::code(CgenEnvironment *env)
@@ -1035,7 +1035,7 @@ operand bool_const_class::code(CgenEnvironment *env)
 		std::cerr << "Boolean Constant" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	return bool_value(this->val, this->val);
 }
 
 operand object_class::code(CgenEnvironment *env)
@@ -1044,7 +1044,10 @@ operand object_class::code(CgenEnvironment *env)
 		std::cerr << "Object" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+
+	operand ret = *(env->lookup(name));
+	return vp.load(ret.get_type().get_deref_type(), ret);
 }
 
 operand no_expr_class::code(CgenEnvironment *env)
