@@ -823,6 +823,14 @@ void method_class::code(CgenEnvironment *env)
 		std::cerr << "method" << endl;
 
 	// ADD CODE HERE
+	ValuePrinter vp{*(env->cur_stream)};
+
+	vector<operand> method_body_args_v;
+	vector<op_type> method_body_args_t;
+
+	vp.begin_block("abort");
+	vp.call(method_body_args_t, VOID, "abort", true, method_body_args_v);
+	vp.unreachable();
 }
 
 //
