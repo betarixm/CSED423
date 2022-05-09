@@ -843,7 +843,13 @@ operand assign_class::code(CgenEnvironment *env)
 		std::cerr << "assign" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+
+	ValuePrinter vp{*(env->cur_stream)};
+
+	operand value = this->expr->code(env);
+	vp.store(value, *(env->lookup(name)));
+
+	return value;
 }
 
 operand cond_class::code(CgenEnvironment *env)
