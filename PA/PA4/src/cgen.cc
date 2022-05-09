@@ -876,7 +876,14 @@ operand block_class::code(CgenEnvironment *env)
 		std::cerr << "block" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+
+	operand block;
+
+	for (int i = this->body->first(); this->body->more(i); i = body->next(i))
+	{
+		block = this->body->nth(i)->code(env);
+	}
+	return block;
 }
 
 operand let_class::code(CgenEnvironment *env)
