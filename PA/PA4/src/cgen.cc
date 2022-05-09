@@ -901,7 +901,9 @@ operand plus_class::code(CgenEnvironment *env)
 		std::cerr << "plus" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+
+	ValuePrinter vp{*(env->cur_stream)};
+	return vp.add(this->e1->code(env), this->e2->code(env));
 }
 
 operand sub_class::code(CgenEnvironment *env)
@@ -910,7 +912,8 @@ operand sub_class::code(CgenEnvironment *env)
 		std::cerr << "sub" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+	return vp.sub(this->e1->code(env), this->e2->code(env));
 }
 
 operand mul_class::code(CgenEnvironment *env)
@@ -919,7 +922,8 @@ operand mul_class::code(CgenEnvironment *env)
 		std::cerr << "mul" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+	return vp.mul(this->e1->code(env), this->e2->code(env));
 }
 
 operand divide_class::code(CgenEnvironment *env)
@@ -928,7 +932,19 @@ operand divide_class::code(CgenEnvironment *env)
 		std::cerr << "div" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+
+	string branch_ok_label = env->new_ok_label();
+	operand e1_code = this->e1->code(env);
+	operand e2_code = this->e2->code(env);
+
+	vp.branch_cond(
+		vp.icmp(EQ, e2_code, int_value(0)),
+		"abort",
+		branch_ok_label);
+
+	vp.begin_block(branch_ok_label);
+	return vp.div(e1_code, e2_code);
 }
 
 operand neg_class::code(CgenEnvironment *env)
