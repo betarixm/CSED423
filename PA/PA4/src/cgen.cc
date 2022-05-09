@@ -567,26 +567,52 @@ void CgenClassTable::code_classes(CgenNode *c)
 // Create LLVM entry point. This function will initiate our Cool program
 // by generating the code to execute (new Main).main()
 //
-void CgenClassTable::code_main(){
-// Define a function main that has no parameters and returns an i32
+void CgenClassTable::code_main()
+{
+	ValuePrinter vp{*ct_stream};
 
-// Define an entry basic block
+	// Define a function main that has no parameters and returns an i32
+	vector<op_type> main_args_t;
+	vector<operand> main_args_v;
+	op_type main_retn_type{INT32};
 
-// Call Main_main(). This returns int* for phase 1, Object for phase 2
+	vp.define(main_retn_type, "main", main_args_v);
+
+	// Define an entry basic block
+	vp.begin_block("entry");
+	operand main_retn_val = vp.call(main_args_t, main_retn_type, "Main_main", true, main_args_v);
+
+	// Call Main_main(). This returns int* for phase 1, Object for phase 2
 
 #ifndef PA5
-// Get the address of the string "Main_main() returned %d\n" using
-// getelementptr
+	// Get the address of the string "Main_main() returned %d\n" using
+	// getelementptr
 
-// Call printf with the string address of "Main_main() returned %d\n"
-// and the return value of Main_main() as its arguments
+	string main_out_0_str = "Main_main() returned %d\n";
+	op_type main_out_0_typ(INT8_PTR);
+	op_arr_type main_out_0_arr{INT8_PTR, (int)main_out_0_str.length() + 1};
+	const_value main_out_0_cst{main_out_0_arr, main_out_0_str, false};
 
-// Insert return 0
+	global_value main_out_0{main_out_0_arr, ".str", main_out_0_cst};
+
+	operand main_out_0_ptr = vp.getelementptr(main_out_0.get_type(), int_value(0), int_value(0), main_out_0_typ);
+
+	// Call printf with the string address of "Main_main() returned %d\n"
+	// and the return value of Main_main() as its arguments
+
+	vector<op_type> printf_args_t{main_out_0_typ, main_retn_type};
+	vector<operand> printf_args_v{main_out_0_ptr, main_retn_val};
+	op_type printf_retn_t{INT32};
+
+	vp.call(printf_args_t, printf_retn_t, "printf", true, printf_args_v);
+
+	// Insert return 0
+	vp.ret(int_value(0));
 
 #else
-// Phase 2
+	// Phase 2
 #endif
-
+	vp.end_define();
 }
 
 ///////////////////////////////////////////////////////////////////////
