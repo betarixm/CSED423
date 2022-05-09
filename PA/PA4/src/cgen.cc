@@ -1056,7 +1056,7 @@ operand no_expr_class::code(CgenEnvironment *env)
 		std::cerr << "No_expr" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	return operand{};
 }
 
 //*****************************************************************
