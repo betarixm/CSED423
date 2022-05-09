@@ -699,6 +699,18 @@ void CgenNode::codeGenMainmain()
 	// Generally what you need to do are:
 	// -- setup or create the environment, env, for translating this method
 	// -- invoke mainMethod->code(env) to translate the method
+
+	auto env = new CgenEnvironment(*(this->class_table->ct_stream), this);
+
+	vector<operand> main_args_v;
+	op_type main_retn_type{INT32};
+
+	vp.define(main_retn_type, "Main_main", main_args_v);
+	{
+		vp.begin_block("entry");
+		mainMethod->code(env);
+	}
+	vp.end_define();
 }
 
 #endif
