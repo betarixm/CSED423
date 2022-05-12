@@ -718,7 +718,7 @@ void CgenNode::layout_features()
 //
 void CgenNode::codeGenMainmain()
 {
-	ValuePrinter vp;
+	ValuePrinter vp{*(this->class_table->ct_stream)};
 	// In Phase 1, this can only be class Main. Get method_class for main().
 	assert(std::string(this->name->get_string()) == std::string("Main"));
 	method_class *mainMethod = (method_class *)features->nth(features->first());
