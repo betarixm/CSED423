@@ -994,7 +994,11 @@ operand let_class::code(CgenEnvironment *env)
     else
         vp.store(let_init_value, let_name);
 
-    return this->body->code(env);
+    operand result = this->body->code(env);
+
+    env->kill_local();
+
+    return result;
 }
 
 operand plus_class::code(CgenEnvironment *env)
