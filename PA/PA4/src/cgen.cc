@@ -1056,7 +1056,7 @@ operand neg_class::code(CgenEnvironment *env)
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
 	ValuePrinter vp{*(env->cur_stream)};
-	return vp.sub(int_value(0), this->e1->code(env));
+	return vp.xor_in(int_value(0xFFFFFFFF), this->e1->code(env));
 }
 
 operand lt_class::code(CgenEnvironment *env)
