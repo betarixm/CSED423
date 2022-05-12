@@ -890,7 +890,40 @@ operand cond_class::code(CgenEnvironment *env)
 		std::cerr << "cond" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+
+	string branch_then_label = env->new_label("cond.then.", 1);
+	string branch_else_label = env->new_label("cond.else.", 1);
+	string branch_done_label = env->new_label("cond.done.", 1);
+
+	op_type result_type;
+	operand result_ptr, op_then, op_else;
+
+	ostream *cur_stream = env->cur_stream;
+	env->cur_stream = new std::stringstream();
+	result_type = this->then_exp->code(env).get_type();
+	env->cur_stream = cur_stream;
+
+	result_ptr = vp.alloca_mem(result_type);
+
+	vp.branch_cond(this->pred->code(env), branch_then_label, branch_else_label);
+
+	// then
+	vp.begin_block(branch_then_label);
+	op_then = this->then_exp->code(env);
+	vp.store(op_then, result_ptr);
+	vp.branch_uncond(branch_done_label);
+
+	// else
+	vp.begin_block(branch_else_label);
+	op_else = this->else_exp->code(env);
+	vp.store(op_else, result_ptr);
+	vp.branch_uncond(branch_done_label);
+
+	// done
+	vp.begin_block(branch_done_label);
+
+	return vp.load(result_type, result_ptr);
 }
 
 operand loop_class::code(CgenEnvironment *env)
