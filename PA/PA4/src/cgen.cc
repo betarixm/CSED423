@@ -980,7 +980,21 @@ operand let_class::code(CgenEnvironment *env)
 		std::cerr << "let" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+
+	op_type type = (strcmp(this->type_decl->get_string(), "Bool") == 0) ? INT1 : INT32;
+
+	operand let_init_value = this->init->code(env);
+	operand let_name = vp.alloca_mem(type);
+
+	env->add_local(this->identifier, let_name);
+
+	if (let_init_value.get_type().get_id() == EMPTY)
+		vp.store(const_value(type, (type.get_id() == INT1) ? "false" : "0", true), let_name);
+	else
+		vp.store(let_init_value, let_name);
+
+	return this->body->code(env);
 }
 
 operand plus_class::code(CgenEnvironment *env)
