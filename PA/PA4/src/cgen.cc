@@ -856,6 +856,8 @@ void method_class::code(CgenEnvironment *env)
 	vector<operand> method_body_args_v;
 	vector<op_type> method_body_args_t;
 
+	vp.ret(expr->code(env));
+
 	vp.begin_block("abort");
 	vp.call(method_body_args_t, VOID, "abort", true, method_body_args_v);
 	vp.unreachable();
