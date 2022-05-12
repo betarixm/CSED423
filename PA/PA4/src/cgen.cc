@@ -11,7 +11,35 @@
 #include <sstream>
 
 //
+#define VERBOSE
+
+#define RED 31
+#define GREEN 32
+#define YELLOW 33
+#define BLUE 34
+#define MAGENTA 35
+#define CYAN 36
+#define WHITE 37
+#define RESET 0
+
 extern int cgen_debug;
+
+void print(std::string str);
+
+std::string coloring(std::string str, int color);
+
+void print(std::string str)
+{
+#ifdef VERBOSE
+	std::cout << coloring("[*] OUT: ", YELLOW) << str << std::endl;
+#endif
+}
+
+std::string coloring(std::string str, int color)
+{
+	return "\x1b[" + std::to_string(color) + "m" + str + "\x1b[" +
+		   std::to_string(RESET) + "m";
+}
 
 //////////////////////////////////////////////////////////////////////
 //
