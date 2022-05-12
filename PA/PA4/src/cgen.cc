@@ -932,7 +932,30 @@ operand loop_class::code(CgenEnvironment *env)
 		std::cerr << "loop" << endl;
 	// ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
 	// MORE MEANINGFUL
-	return operand();
+	ValuePrinter vp{*(env->cur_stream)};
+
+	string branch_cond_label = env->new_label("loop.cond.", 1);
+	string branch_body_label = env->new_label("loop.body.", 1);
+	string branch_done_label = env->new_label("loop.done.", 1);
+
+	vp.branch_uncond(branch_cond_label);
+
+	vp.begin_block(branch_cond_label);
+
+	vp.branch_cond(
+		this->pred->code(env),
+		branch_body_label,
+		branch_done_label);
+
+	vp.begin_block(branch_body_label);
+
+	operand op_body = this->body->code(env);
+
+	vp.branch_uncond(branch_cond_label);
+
+	vp.begin_block(branch_done_label);
+
+	return op_body;
 }
 
 operand block_class::code(CgenEnvironment *env)
