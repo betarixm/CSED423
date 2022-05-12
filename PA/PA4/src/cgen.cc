@@ -599,6 +599,13 @@ void CgenClassTable::code_main()
 {
 	ValuePrinter vp{*ct_stream};
 
+	string main_out_0_str = "Main_main() returned %d\n";
+	op_type main_out_0_typ(INT8_PTR);
+	op_arr_type main_out_0_arr{INT8, (int)main_out_0_str.length() + 1};
+	const_value main_out_0_cst{main_out_0_arr, main_out_0_str, false};
+
+	vp.init_constant(".str", main_out_0_cst);
+
 	// Define a function main that has no parameters and returns an i32
 	vector<op_type> main_args_t;
 	vector<operand> main_args_v;
@@ -617,20 +624,15 @@ void CgenClassTable::code_main()
 	// Get the address of the string "Main_main() returned %d\n" using
 	// getelementptr
 
-	string main_out_0_str = "Main_main() returned %d\n";
-	op_type main_out_0_typ(INT8_PTR);
-	op_arr_type main_out_0_arr{INT8_PTR, (int)main_out_0_str.length() + 1};
-	const_value main_out_0_cst{main_out_0_arr, main_out_0_str, false};
+		global_value main_out_0_ptr{op_arr_type{INT8_PTR, (int)main_out_0_str.length() + 1}, ".str", main_out_0_cst};
 
-	global_value main_out_0{main_out_0_arr, ".str", main_out_0_cst};
-
-	operand main_out_0_ptr = vp.getelementptr(main_out_0.get_type(), int_value(0), int_value(0), main_out_0_typ);
+		operand main_out_0 = vp.getelementptr(main_out_0_arr, main_out_0_ptr, int_value(0), int_value(0), main_out_0_typ);
 
 	// Call printf with the string address of "Main_main() returned %d\n"
 	// and the return value of Main_main() as its arguments
 
-	vector<op_type> printf_args_t{main_out_0_typ, main_retn_type};
-	vector<operand> printf_args_v{main_out_0_ptr, main_retn_val};
+		vector<op_type> printf_args_t{main_out_0_typ, op_type{VAR_ARG}};
+		vector<operand> printf_args_v{main_out_0, main_retn_val};
 	op_type printf_retn_t{INT32};
 
 	vp.call(printf_args_t, printf_retn_t, "printf", true, printf_args_v);
