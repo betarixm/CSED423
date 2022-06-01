@@ -33,7 +33,7 @@ struct Object
 	}
 	*/
 
-	Object_vtable *vt;
+	Object_vtable *vtblptr;
 };
 
 struct Int
@@ -46,7 +46,7 @@ struct Int
 	}
 	*/
 
-	Int_vtable *vt;
+	Int_vtable *vtblptr;
 	int32_t val;
 };
 
@@ -60,7 +60,7 @@ struct Bool
 	}
 	*/
 
-	Bool_vtable *vt;
+	Bool_vtable *vtblptr;
 	bool val;
 };
 
@@ -74,7 +74,7 @@ struct String
 	}
 	*/
 
-	String_vtable *vt;
+	String_vtable *vtblptr;
 	int8_t *val;
 };
 
@@ -87,7 +87,7 @@ struct IO
 	}
 	*/
 
-	IO_vtable *vt;
+	IO_vtable *vtblptr;
 };
 
 /* vtable type definitions */
