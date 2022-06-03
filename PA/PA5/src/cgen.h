@@ -169,6 +169,17 @@ public:
     // ADD CODE HERE
     string get_type_name() { return string(name->get_string()); }
     string get_constructor_name() { return this->get_type_name() + "_new"; }
+    method_info get_method_info_by_name(string name)
+    {
+        for (auto m : this->methods_layout)
+        {
+            if (m.second.llvm_mangled_name == name)
+            {
+                return m.second;
+            }
+        }
+        return method_info{};
+    }
 
     void add_method(Entry *method_entry, const op_type a3, const std::vector<op_type> a4, string llvm_mangled_name, string def_class_name, bool is_ret_self);
     void add_attribute(Symbol name, op_type llvm_type, bool is_self_type, Feature *attr_node);

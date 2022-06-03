@@ -736,7 +736,7 @@ void CgenClassTable::code_main()
 
         vector<op_type> main_main_args_t;
         vector<operand> main_main_args_v;
-        op_type main_main_retn_type{"Object*(%Main*)"};
+        op_type main_main_retn_type{this->lookup(Main)->get_method_info_by_name("Main_main").llvm_ret_type.get_name().substr(1) + "(%Main*)"};
         operand main_main_result_op{main_main_retn_type, "main.retval"};
 
         vp.call(*this->ct_stream, main_main_args_t, "Main_main", true, main_main_args_v, main_main_result_op);
