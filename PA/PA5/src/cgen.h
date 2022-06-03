@@ -16,6 +16,8 @@
 #include "symtab.h"
 #include "value_printer.h"
 
+#include <map>
+
 #define PA5
 
 //
@@ -97,6 +99,24 @@ public:
         NotBasic
     };
 
+    struct method_info
+    {
+        int offset;
+        op_type llvm_ret_type;
+        vector<op_type> llvm_args_types;
+        string llvm_mangled_name;
+        string def_class_name;
+        bool is_ret_self_type;
+    };
+
+    struct attribute_info
+    {
+        int offset;
+        op_type llvm_type;
+        bool is_self_type;
+        Feature *attr_node;
+    };
+
 #ifndef PA5
     void codeGenMainmain();
 #endif
@@ -111,7 +131,11 @@ private:
     int tag;
     int max_child;
 
-    // ADD CODE HERE
+    int methods_offset;
+    int attributes_offset;
+
+    std::map<Entry *, method_info> methods_layout;
+    std::map<Entry *, attribute_info> attributes_layout;
 
 public:
     // COMPLETE FUNCTIONS
@@ -144,6 +168,10 @@ public:
 
     // ADD CODE HERE
     string get_type_name() { return string(name->get_string()); }
+    string get_constructor_name() { return this->get_type_name() + "_new"; }
+
+    void add_method(Entry *method_entry, const op_type a3, const std::vector<op_type> a4, string llvm_mangled_name, string def_class_name, bool is_ret_self);
+    void add_attribute(Symbol name, op_type llvm_type, bool is_self_type, Feature *attr_node);
 
 private:
     // Layout the methods and attributes for code generation

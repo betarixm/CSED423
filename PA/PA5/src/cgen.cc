@@ -9,6 +9,7 @@
 #include "cgen.h"
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 //
 #define VERBOSE
@@ -201,8 +202,76 @@ void CgenClassTable::setup_external_functions()
     vp.declare(*ct_stream, i8ptr_type, "malloc", malloc_args);
 
 #ifdef PA5
-    // ADD CODE HERE
     // Setup external functions for built in object class functions
+    op_type objectptr_type{"Object*"}, stringptr_type{"String*"}, ioptr_type{"IO*"}, int32_t_type{INT32}, int32_tptr_type{INT32_PTR}, int_type{"Int"}, intptr_type{"Int*"}, boolptr_type{"Bool*"}, i1_type{INT1};
+
+    // setup function: external Object* Object_new (void);
+    vector<op_type> object_new_args{void_type};
+    vp.declare(*ct_stream, objectptr_type, "Object_new", object_new_args);
+
+    // setup function: external Object* Object_abort (Object*);
+    vector<op_type> object_abort_args{objectptr_type};
+    vp.declare(*ct_stream, objectptr_type, "Object_abort", object_abort_args);
+
+    // setup function: external const String* Object_type_name (Object*);
+    vector<op_type> object_type_name_args{objectptr_type};
+    vp.declare(*ct_stream, stringptr_type, "Object_type_name", object_type_name_args);
+
+    // setup function: external Object* Object_copy (Object*);
+    vector<op_type> object_copy_args{objectptr_type};
+    vp.declare(*ct_stream, objectptr_type, "Object_copy", object_copy_args);
+
+    // setup function: external IO* IO_new (void);
+    vector<op_type> io_new_args{void_type};
+    vp.declare(*ct_stream, ioptr_type, "IO_new", io_new_args);
+
+    // setup function: external IO* IO_out_string (IO*, String*);
+    vector<op_type> io_out_string_args{ioptr_type, stringptr_type};
+    vp.declare(*ct_stream, ioptr_type, "IO_out_string", io_out_string_args);
+
+    // setup function: external IO* IO_out_int (IO*, int32_t*);
+    vector<op_type> io_out_int_args{ioptr_type, int32_tptr_type};
+    vp.declare(*ct_stream, ioptr_type, "IO_out_int", io_out_int_args);
+
+    // setup function: external String* IO_in_string (IO*);
+    vector<op_type> io_in_string_args{ioptr_type};
+    vp.declare(*ct_stream, stringptr_type, "IO_in_string", io_in_string_args);
+
+    // setup function: external int32_t* IO_in_int (IO*);
+    vector<op_type> io_in_int_args{ioptr_type};
+    vp.declare(*ct_stream, int32_tptr_type, "IO_in_int", io_in_int_args);
+
+    // setup function: external String* String_new (void);
+    vector<op_type> string_new_args{void_type};
+    vp.declare(*ct_stream, stringptr_type, "String_new", string_new_args);
+
+    // setup function: external int32_t  String_length (String*);
+    vector<op_type> string_length_args{stringptr_type};
+    vp.declare(*ct_stream, int32_t_type, "String_length", string_length_args);
+
+    // setup function: external String* String_concat (String*, String*);
+    vector<op_type> string_concat_args{stringptr_type, stringptr_type};
+    vp.declare(*ct_stream, stringptr_type, "String_concat", string_concat_args);
+
+    // setup function: external String* String_substr (String*, int32_t, int32_t);
+    vector<op_type> string_substr_args{stringptr_type, int32_t_type, int32_t_type};
+    vp.declare(*ct_stream, stringptr_type, "String_substr", string_substr_args);
+
+    // setup function: external Int* Int_new (void);
+    vector<op_type> int_new_args{void_type};
+    vp.declare(*ct_stream, intptr_type, "Int_new", int_new_args);
+
+    // setup function :external void Int_init (Int*, int32_t);
+    vector<op_type> int_init_args{intptr_type, int32_t_type};
+    vp.declare(*ct_stream, void_type, "Int_init", int_init_args);
+
+    // setup function: external Bool* Bool_new (void);
+    vector<op_type> bool_new_args{void_type};
+    vp.declare(*ct_stream, boolptr_type, "Bool_new", bool_new_args);
+
+    // setup function: external void Bool_init (Bool*, i1);
+    vector<op_type> bool_init_args{boolptr_type, i1_type};
+    vp.declare(*ct_stream, void_type, "Bool_init", bool_init_args);
 #endif
 }
 
@@ -481,6 +550,7 @@ void CgenClassTable::code_constants()
 #ifdef PA5
 
     // ADD CODE HERE
+    // TODO
 #endif
 }
 
@@ -586,8 +656,14 @@ void CgenClassTable::code_module()
 #ifdef PA5
 void CgenClassTable::code_classes(CgenNode *c)
 {
+    c->code_class();
 
-    // ADD CODE HERE
+    List<CgenNode> *children = c->get_children();
+
+    for (List<CgenNode> *child = children; child != NULL; child = child->tl())
+    {
+        this->code_classes(child->hd());
+    }
 }
 #endif
 
@@ -599,12 +675,14 @@ void CgenClassTable::code_main()
 {
     ValuePrinter vp{*ct_stream};
 
-    string main_out_0_str = "Main_main() returned %d\n";
-    op_type main_out_0_typ(INT8_PTR);
-    op_arr_type main_out_0_arr{INT8, (int)main_out_0_str.length() + 1};
-    const_value main_out_0_cst{main_out_0_arr, main_out_0_str, false};
-
-    vp.init_constant(".str", main_out_0_cst);
+    /*
+    define i32 @main() {
+    entry:
+        %main.obj = call %Main*() @Main_new( )
+        %main.retval = call i32(%Main*) @Main_main( %Main* %main.obj )
+        ret i32 0
+    }
+    */
 
     // Define a function main that has no parameters and returns an i32
     vector<op_type> main_args_t;
@@ -613,14 +691,21 @@ void CgenClassTable::code_main()
 
     vp.define(main_retn_type, "main", main_args_v);
     {
-
         // Define an entry basic block
         vp.begin_block("entry");
-        operand main_retn_val = vp.call(main_args_t, main_retn_type, "Main_main", true, main_args_v);
 
         // Call Main_main(). This returns int* for phase 1, Object for phase 2
 
 #ifndef PA5
+        operand main_retn_val = vp.call(main_args_t, main_retn_type, "Main_main", true, main_args_v);
+
+        string main_out_0_str = "Main_main() returned %d\n";
+        op_type main_out_0_typ(INT8_PTR);
+        op_arr_type main_out_0_arr{INT8, (int)main_out_0_str.length() + 1};
+        const_value main_out_0_cst{main_out_0_arr, main_out_0_str, false};
+
+        vp.init_constant(".str", main_out_0_cst);
+
         // Get the address of the string "Main_main() returned %d\n" using
         // getelementptr
 
@@ -642,6 +727,21 @@ void CgenClassTable::code_main()
 
 #else
         // Phase 2
+        vector<op_type> main_new_args_t;
+        vector<operand> main_new_args_v;
+        op_type main_new_retn_type{op_type("Main*()")};
+        operand main_new_result_op{main_new_retn_type, "main.obj"};
+
+        vp.call(*this->ct_stream, main_new_args_t, "Main_new", true, main_new_args_v, main_new_result_op);
+
+        vector<op_type> main_main_args_t;
+        vector<operand> main_main_args_v;
+        op_type main_main_retn_type{"Object*(%Main*)"};
+        operand main_main_result_op{main_main_retn_type, "main.retval"};
+
+        vp.call(*this->ct_stream, main_main_args_t, "Main_main", true, main_main_args_v, main_main_result_op);
+
+        vp.ret(int_value(0));
 #endif
     }
     vp.end_define();
@@ -653,11 +753,46 @@ void CgenClassTable::code_main()
 //
 ///////////////////////////////////////////////////////////////////////
 
+op_type symbol_to_op_type(Symbol type_decl, CgenNode *cls)
+{
+    op_type result;
+
+    if (type_decl == No_class)
+    {
+        result = op_type{VOID};
+    }
+    else if (type_decl == No_type)
+    {
+        result = op_type{EMPTY};
+    }
+    else if (type_decl == SELF_TYPE)
+    {
+        result = op_type{cls->get_type_name(), 1};
+    }
+    else if (type_decl == Int || type_decl == prim_int)
+    {
+        result = op_type{INT32};
+    }
+    else if (type_decl == Bool || type_decl == prim_bool)
+    {
+        result = op_type{INT1};
+    }
+    else if (type_decl == prim_string)
+    {
+        result = op_type{INT8_PTR};
+    }
+    else
+    {
+        result = op_type{type_decl->get_string(), 1};
+    }
+
+    return result;
+}
+
 CgenNode::CgenNode(Class_ nd, Basicness bstatus, CgenClassTable *ct)
     : class__class((const class__class &)*nd),
-      parentnd(0), children(0), basic_status(bstatus), class_table(ct), tag(-1)
+      parentnd(0), children(0), basic_status(bstatus), class_table(ct), tag(-1), methods_offset(0), attributes_offset(0)
 {
-    // ADD CODE HERE
 }
 
 void CgenNode::add_child(CgenNode *n)
@@ -688,7 +823,75 @@ void CgenNode::setup(int tag, int depth)
 #ifdef PA5
     layout_features();
 
-    // ADD CODE HERE
+    ValuePrinter vp{*(this->get_classtable()->ct_stream)};
+
+    vector<method_info> methods;
+    vector<attribute_info> attributes;
+
+    op_type i32_type = op_type{INT32};
+    op_type i8ptr_type = op_type{INT8_PTR};
+
+    op_arr_type i8_arr_type = op_arr_type{INT8, (int)this->get_type_name().length() + 1};
+
+    op_func_type constructor_type = op_func_type{op_type{this->get_type_name(), 1}, vector<op_type>{}};
+
+    string node_name = "str." + this->get_type_name();
+
+    vector<op_type> vtable_fields{
+        i32_type,         // id
+        i32_type,         // size
+        i8ptr_type,       // name
+        constructor_type, // constructor
+    };
+
+    vector<const_value> vtable_init_values{
+        int_value{this->tag},
+        const_value{i32_type, "ptrtoint (%" + this->get_type_name() + "* getelementptr (%" + this->get_type_name() + ", %" + this->get_type_name() + "* null, i32 1) to i32)", true},
+        const_value{i8_arr_type, "@" + node_name, true},
+        const_value{constructor_type, "@" + this->get_constructor_name(), true},
+    };
+
+    std::transform(methods_layout.begin(), methods_layout.end(), std::back_inserter(methods), [](std::pair<Entry *, CgenNode::method_info> i)
+                   { return i.second; });
+
+    std::transform(attributes_layout.begin(), attributes_layout.end(), std::back_inserter(attributes), [](std::pair<Entry *, CgenNode::attribute_info> i)
+                   { return i.second; });
+
+    std::sort(methods.begin(), methods.end(), [](method_info a, method_info b)
+              { return a.offset < b.offset; });
+
+    std::sort(attributes.begin(), attributes.end(), [](attribute_info a, attribute_info b)
+              { return a.offset < b.offset; });
+
+    for (method_info &method : methods)
+    {
+        op_func_type ret_type = op_func_type{method.llvm_ret_type, method.llvm_args_types};
+
+        vtable_fields.push_back(ret_type);
+
+        if (method.def_class_name == this->get_type_name())
+        {
+            vtable_init_values.push_back(const_value{ret_type, "@" + method.llvm_mangled_name, true});
+        }
+        else
+        {
+            op_type evaluated_self_type = (method.is_ret_self_type) ? op_type{method.def_class_name, 1} : op_type{method.llvm_ret_type};
+
+            method.llvm_args_types.at(0) = evaluated_self_type;
+
+            vtable_init_values.push_back(casted_value{ret_type, "@" + method.llvm_mangled_name, op_func_type{evaluated_self_type, method.llvm_args_types}});
+        }
+    }
+
+    for (attribute_info attr : attributes)
+    {
+    }
+
+    vp.init_constant(node_name, const_value{i8ptr_type, this->get_type_name(), true});
+
+    vp.type_define(this->get_type_name() + "_vtable", vtable_fields);
+
+    vp.init_struct_constant(global_value{op_type{this->get_type_name() + "_vtable"}, this->get_type_name() + "_vtable_prototype"}, vtable_fields, vtable_init_values);
 
 #endif
 }
@@ -711,8 +914,39 @@ void CgenNode::code_class()
 // and assigning each attribute a slot in the class structure.
 void CgenNode::layout_features()
 {
-    // ADD CODE HERE
+    if (this->parentnd)
+    {
+        this->attributes_offset = this->parentnd->attributes_offset;
+        this->attributes_layout = this->parentnd->attributes_layout;
+
+        this->methods_offset = this->parentnd->methods_offset;
+        this->methods_layout = this->parentnd->methods_layout;
+    }
+
+    for (int i = this->features->first(); this->features->more(i); i = this->features->next(i))
+    {
+        this->features->nth(i)->layout_feature(this);
+    }
 }
+
+void CgenNode::add_method(Entry *method_entry, const op_type llvm_ret_type, const std::vector<op_type> llvm_args_types, string llvm_mangled_name, string def_class_name, bool is_ret_self_type)
+{
+    if (this->methods_layout.count(method_entry) > 0)
+    {
+        this->methods_layout[method_entry].llvm_mangled_name = llvm_mangled_name;
+        this->methods_layout[method_entry].def_class_name = def_class_name;
+    }
+    else
+    {
+        this->methods_layout[method_entry] = method_info{this->methods_offset++, llvm_ret_type, llvm_args_types, llvm_mangled_name, def_class_name, is_ret_self_type};
+    }
+}
+
+void CgenNode::add_attribute(Symbol name, op_type llvm_type, bool is_self_type, Feature *attr_node)
+{
+    this->attributes_layout[name] = attribute_info{this->attributes_offset++, llvm_type, is_self_type, attr_node};
+}
+
 #else
 
 //
@@ -1235,7 +1469,15 @@ void method_class::layout_feature(CgenNode *cls)
 #ifndef PA5
     assert(0 && "Unsupported case for phase 1");
 #else
-    // ADD CODE HERE
+    std::vector<op_type> args{symbol_to_op_type(SELF_TYPE, cls)};
+
+    for (int i = this->formals->first(); this->formals->more(i); i = this->formals->next(i))
+    {
+        Formal f = this->formals->nth(i);
+        args.push_back(symbol_to_op_type(f->get_type_decl(), cls));
+    }
+
+    cls->add_method(this->name, symbol_to_op_type(this->return_type, cls), args, cls->get_type_name() + "_" + this->name->get_string(), cls->get_type_name(), this->return_type == SELF_TYPE);
 #endif
 }
 
@@ -1259,7 +1501,7 @@ void attr_class::layout_feature(CgenNode *cls)
 #ifndef PA5
     assert(0 && "Unsupported case for phase 1");
 #else
-    // ADD CODE HERE
+    cls->add_attribute(this->name, symbol_to_op_type(this->type_decl, cls), this->type_decl == SELF_TYPE, (Feature *)this);
 #endif
 }
 
