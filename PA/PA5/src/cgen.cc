@@ -930,7 +930,87 @@ void CgenNode::code_class()
     if (basic())
         return;
 
-    // ADD CODE HERE
+    ostream &o = *this->get_classtable()->ct_stream;
+    CgenEnvironment *env = new CgenEnvironment{o, this};
+    ValuePrinter vp{o};
+
+    for (int i = this->features->first(); this->features->more(i); i = this->features->next(i))
+    {
+        Feature f = this->features->nth(i);
+        f->code(env);
+    }
+
+    env->enterscope();
+    {
+        // Define constructor
+        vp.define(op_type{this->get_type_name(), 1}, this->get_constructor_name(), vector<operand>{});
+        {
+            vp.begin_block("entry");
+
+            // Get size of class
+            global_value vtable_global{op_type{this->get_vtable_type_name(), 1}, this->get_vtable_name()};
+
+            operand v_size_ptr{op_type{INT32_PTR}, env->new_name()};
+            operand v_size{op_type{INT32}, env->new_name()};
+
+            vp.getelementptr(o, op_type{this->get_vtable_type_name()}, vtable_global, int_value{0}, int_value{1}, v_size_ptr);
+            vp.load(o, op_type{INT32}, v_size_ptr, v_size);
+
+            // Malloc
+            operand v_malloced{op_type{INT8_PTR}, env->new_name()};
+
+            vector<op_type> malloc_arg_t{
+                op_type{INT32}, // size
+            };
+
+            vector<operand> malloc_arg_v{
+                v_size,
+            };
+
+            vp.call(o, malloc_arg_t, "malloc", true, malloc_arg_v, v_malloced);
+
+            // Cast to Main*
+            op_type mainptr_type{this->get_type_name(), 1};
+            operand v_main_ptr{mainptr_type, env->new_name()};
+
+            vp.bitcast(o, v_malloced, mainptr_type, v_main_ptr);
+
+            //
+            op_type main_type{this->get_type_name()};
+            operand v_main{op_type{this->get_vtable_type_name(), 2}, env->new_name()};
+
+            vp.getelementptr(o, main_type, v_main_ptr, int_value{0}, int_value{0}, v_main);
+
+            //
+            vp.store(vtable_global, v_main);
+
+            //
+            operand v_main_stack{op_type{this->get_type_name(), 2}, env->new_name()};
+            vp.alloca_mem(o, mainptr_type, v_main_stack);
+
+            //
+            vp.store(v_main_ptr, v_main_stack);
+
+            // env->addid();
+
+            for (attribute_info attr : this->get_sorted_attribute_layout())
+            {
+                attr.attr_node->code(env);
+            }
+
+            //
+            vp.ret(v_main_ptr);
+
+            vp.begin_block("abort");
+            vp.call(vector<op_type>{}, VOID, "abort", true, vector<operand>{});
+            vp.unreachable();
+        }
+        vp.end_define();
+    }
+
+    env->exitscope();
+
+    delete env;
 }
 
 // Laying out the features involves creating a Function for each method
@@ -965,9 +1045,21 @@ void CgenNode::add_method(Entry *method_entry, const op_type llvm_ret_type, cons
     }
 }
 
-void CgenNode::add_attribute(Symbol name, op_type llvm_type, bool is_self_type, Feature *attr_node)
+void CgenNode::add_attribute(Symbol name, op_type llvm_type, bool is_self_type, Feature attr_node)
 {
     this->attributes_layout[name] = attribute_info{this->attributes_offset++, llvm_type, is_self_type, attr_node};
+}
+
+vector<CgenNode::attribute_info> CgenNode::get_sorted_attribute_layout()
+{
+    vector<attribute_info> attributes;
+
+    std::transform(attributes_layout.begin(), attributes_layout.end(), std::back_inserter(attributes), [](std::pair<Entry *, CgenNode::attribute_info> i)
+                   { return i.second; });
+    std::sort(attributes.begin(), attributes.end(), [](attribute_info a, attribute_info b)
+              { return a.offset < b.offset; });
+
+    return attributes;
 }
 
 #else
@@ -1486,7 +1578,7 @@ void attr_class::layout_feature(CgenNode *cls)
 #ifndef PA5
     assert(0 && "Unsupported case for phase 1");
 #else
-    cls->add_attribute(this->name, symbol_to_op_type(this->type_decl, cls), this->type_decl == SELF_TYPE, (Feature *)this);
+    cls->add_attribute(this->name, symbol_to_op_type(this->type_decl, cls), this->type_decl == SELF_TYPE, (Feature)this);
 #endif
 }
 

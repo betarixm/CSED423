@@ -114,7 +114,7 @@ public:
         int offset;
         op_type llvm_type;
         bool is_self_type;
-        Feature *attr_node;
+        Feature attr_node;
     };
 
 #ifndef PA5
@@ -169,6 +169,10 @@ public:
     // ADD CODE HERE
     string get_type_name() { return string(name->get_string()); }
     string get_constructor_name() { return this->get_type_name() + "_new"; }
+    string get_vtable_type_name() { return string(this->get_name()->get_string()) + "_vtable"; }
+    string get_vtable_name() { return string(this->get_name()->get_string()) + "_vtable_prototype"; }
+    vector<attribute_info> get_sorted_attribute_layout();
+
     method_info get_method_info_by_name(string name)
     {
         for (auto m : this->methods_layout)
@@ -182,7 +186,7 @@ public:
     }
 
     void add_method(Entry *method_entry, const op_type a3, const std::vector<op_type> a4, string llvm_mangled_name, string def_class_name, bool is_ret_self);
-    void add_attribute(Symbol name, op_type llvm_type, bool is_self_type, Feature *attr_node);
+    void add_attribute(Symbol name, op_type llvm_type, bool is_self_type, Feature attr_node);
 
 private:
     // Layout the methods and attributes for code generation
@@ -241,6 +245,9 @@ public:
     // Must return the CgenNode for a class given the symbol of its name
     CgenNode *type_to_class(Symbol t);
     // ADD CODE HERE
+    void enterscope() { this->var_table.enterscope(); }
+    void exitscope() { this->var_table.exitscope(); }
+    void addid(Symbol s, operand *i) { this->var_table.addid(s, i); }
 };
 
 // Utitlity function
