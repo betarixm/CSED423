@@ -548,9 +548,7 @@ CgenNode *CgenClassTable::getMainmain(CgenNode *c)
 void CgenClassTable::code_constants()
 {
 #ifdef PA5
-
-    // ADD CODE HERE
-    // TODO
+    stringtable.code_string_table(*this->ct_stream, this);
 #endif
 }
 
@@ -558,8 +556,33 @@ void CgenClassTable::code_constants()
 void StringEntry::code_def(ostream &s, CgenClassTable *ct)
 {
 #ifdef PA5
-    // ADD CODE HERE
+    ValuePrinter vp{s};
+
+    string name = this->get_llvm_constant_name(false);
+    string internal_name = this->get_llvm_constant_name(true);
+    string value = string(this->get_string());
+
+    op_type vtableptr_type = op_type{"String_vtable", 1};
+    op_arr_type internal_name_type = op_arr_type{INT8, (int)value.length() + 1};
+
+    vector<op_type> field_types{
+        vtableptr_type,    // vtable pointer
+        op_type{INT8_PTR}, // val
+    };
+
+    vector<const_value> init_values{
+        const_value{vtableptr_type, "@String_vtable_prototype", 1},
+        const_value{internal_name_type, "@" + internal_name, true},
+    };
+
+    vp.init_constant(this->get_llvm_constant_name(true), const_value{op_arr_type{INT8, (int)string(this->get_string()).length() + 1}, this->get_string(), true});
+    vp.init_struct_constant(global_value{op_type{"String"}, name}, field_types, init_values);
 #endif
+}
+
+string StringEntry::get_llvm_constant_name(bool is_internal)
+{
+    return is_internal ? "str." + itos(this->index) : "String." + itos(this->index);
 }
 
 // generate code to define a global int constant
@@ -1107,8 +1130,6 @@ operand assign_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "assign" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
 
     ValuePrinter vp{*(env->cur_stream)};
 
@@ -1122,8 +1143,6 @@ operand cond_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "cond" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
 
     string branch_then_label = env->new_label("cond.then.", 1);
@@ -1164,8 +1183,6 @@ operand loop_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "loop" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
 
     string branch_cond_label = env->new_label("loop.cond.", 1);
@@ -1196,9 +1213,6 @@ operand block_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "block" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
-
     operand block;
 
     for (int i = this->body->first(); this->body->more(i); i = body->next(i))
@@ -1212,8 +1226,6 @@ operand let_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "let" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
 
     op_type type = (strcmp(this->type_decl->get_string(), "Bool") == 0) ? INT1 : INT32;
@@ -1239,9 +1251,6 @@ operand plus_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "plus" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
-
     ValuePrinter vp{*(env->cur_stream)};
     return vp.add(this->e1->code(env), this->e2->code(env));
 }
@@ -1250,8 +1259,6 @@ operand sub_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "sub" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
     return vp.sub(this->e1->code(env), this->e2->code(env));
 }
@@ -1260,8 +1267,6 @@ operand mul_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "mul" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
     return vp.mul(this->e1->code(env), this->e2->code(env));
 }
@@ -1270,8 +1275,6 @@ operand divide_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "div" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
 
     string branch_ok_label = env->new_ok_label();
@@ -1291,8 +1294,6 @@ operand neg_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "neg" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
     return vp.xor_in(int_value(0xFFFFFFFF), this->e1->code(env));
 }
@@ -1301,8 +1302,6 @@ operand lt_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "lt" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
     return vp.icmp(LT, this->e1->code(env), this->e2->code(env));
 }
@@ -1311,8 +1310,6 @@ operand eq_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "eq" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
     return vp.icmp(EQ, this->e1->code(env), this->e2->code(env));
 }
@@ -1321,8 +1318,6 @@ operand leq_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "leq" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
     return vp.icmp(LE, this->e1->code(env), this->e2->code(env));
 }
@@ -1331,8 +1326,6 @@ operand comp_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "complement" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
 
     operand e1_code = e1->code(env);
@@ -1344,8 +1337,6 @@ operand int_const_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "Integer Constant" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     return int_value(atoi(this->token->get_string()));
 }
 
@@ -1353,8 +1344,6 @@ operand bool_const_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "Boolean Constant" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     return bool_value(this->val, this->val);
 }
 
@@ -1362,8 +1351,6 @@ operand object_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "Object" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     ValuePrinter vp{*(env->cur_stream)};
 
     operand ret = *(env->lookup(name));
@@ -1374,8 +1361,6 @@ operand no_expr_class::code(CgenEnvironment *env)
 {
     if (cgen_debug)
         std::cerr << "No_expr" << endl;
-    // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-    // MORE MEANINGFUL
     return operand{};
 }
 

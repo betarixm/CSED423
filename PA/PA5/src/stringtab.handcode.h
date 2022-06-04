@@ -13,7 +13,8 @@ class CgenClassTable;
 // 
 #define StringEntry_EXTRAS \
   void code_def(ostream& str, CgenClassTable *classTable); \
-  void code_ref(ostream& str, CgenClassTable *classTable);
+  void code_ref(ostream& str, CgenClassTable *classTable); \
+  std::string get_llvm_constant_name(bool is_internal); 
 
 #define IntEntry_EXTRAS \
   void code_def(ostream& str, CgenClassTable *classTable); \
