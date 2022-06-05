@@ -173,7 +173,7 @@ public:
     string get_vtable_name() { return string(this->get_name()->get_string()) + "_vtable_prototype"; }
     vector<attribute_info> get_sorted_attribute_layout();
 
-    method_info get_method_info_by_name(string name)
+    method_info get_method_info_by_llvm_name(string name)
     {
         for (auto m : this->methods_layout)
         {
@@ -183,6 +183,38 @@ public:
             }
         }
         return method_info{};
+    }
+
+    method_info get_method_info_by_symbol(Symbol symbol)
+    {
+        for (auto m : this->methods_layout)
+        {
+            if (m.first == symbol)
+            {
+                return m.second;
+            }
+        }
+    }
+
+    attribute_info get_attribute_info_by_llvm_name(string name)
+    {
+        for (auto m : this->attributes_layout)
+        {
+            if (m.first->get_string() == name)
+            {
+                return m.second;
+            }
+        }
+    }
+    attribute_info get_attribute_info_by_symbol(Symbol symbol)
+    {
+        for (auto a : this->attributes_layout)
+        {
+            if (a.first == symbol)
+            {
+                return a.second;
+            }
+        }
     }
 
     void add_method(Entry *method_entry, const op_type a3, const std::vector<op_type> a4, string llvm_mangled_name, string def_class_name, bool is_ret_self);

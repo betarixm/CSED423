@@ -79,17 +79,22 @@ void dump_with_types(ostream&,int);
 #define Feature_EXTRAS                     		\
 virtual void dump_with_types(ostream&,int) = 0; 	\
 virtual void layout_feature(CgenNode *cls) = 0;		\
-virtual void code(CgenEnvironment *env) = 0;
-
+virtual void code(CgenEnvironment *env) = 0;\
+virtual bool is_method() = 0;
 
 #define Feature_SHARED_EXTRAS                           \
 void dump_with_types(ostream&,int);  			\
 void layout_feature(CgenNode *cls);			\
 void code(CgenEnvironment *env);
 
-
 #define method_EXTRAS			\
-virtual Symbol get_return_type() { return return_type; }
+virtual Symbol get_return_type() { return return_type; }\
+bool is_method() { return true; }
+
+
+#define attr_EXTRAS \
+bool is_method() { return false; }
+
 
 #define Formal_EXTRAS                              \
 virtual Symbol get_type_decl() = 0;                /* ## */ \
