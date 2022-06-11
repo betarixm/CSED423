@@ -7,10 +7,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define VTABLE_META  \
-    int32_t id;      \
-    int32_t address; \
-    int8_t *name;
+#define VTABLE_META \
+    int id;         \
+    int size;       \
+    const char *name;
 
 typedef struct Object Object;
 typedef struct String String;
@@ -33,7 +33,7 @@ struct Object
     }
     */
 
-    Object_vtable *vtblptr;
+    const Object_vtable *vtblptr;
 };
 
 struct Int
@@ -46,8 +46,8 @@ struct Int
     }
     */
 
-    Int_vtable *vtblptr;
-    int32_t val;
+    const Int_vtable *vtblptr;
+    int val;
 };
 
 struct Bool
@@ -60,7 +60,7 @@ struct Bool
     }
     */
 
-    Bool_vtable *vtblptr;
+    const Bool_vtable *vtblptr;
     bool val;
 };
 
@@ -74,8 +74,8 @@ struct String
     }
     */
 
-    String_vtable *vtblptr;
-    int8_t *val;
+    const String_vtable *vtblptr;
+    char *val;
 };
 
 struct IO
@@ -87,7 +87,7 @@ struct IO
     }
     */
 
-    IO_vtable *vtblptr;
+    const IO_vtable *vtblptr;
 };
 
 /* vtable type definitions */
@@ -160,9 +160,9 @@ struct IO_vtable
     String *(*Object_type_name)(IO *);
     IO *(*Object_copy)(IO *);
     IO *(*IO_out_string)(IO *, String *);
-    IO *(*IO_out_int)(IO *, int32_t *);
+    IO *(*IO_out_int)(IO *, int);
     String *(*IO_in_string)(IO *);
-    int32_t *(*IO_in_int)(IO *);
+    int (*IO_in_int)(IO *);
 };
 
 struct Int_vtable
@@ -256,9 +256,9 @@ struct String_vtable
     Object *(*Object_abort)(String *);
     String *(*Object_type_name)(String *);
     String *(*Object_copy)(String *);
-    int32_t (*String_length)(String *);
+    int (*String_length)(String *);
     String *(*String_concat)(String *, String *);
-    String *(*String_substr)(String *, int32_t, int32_t);
+    String *(*String_substr)(String *, int, int);
 };
 
 /* methods in class Object */
@@ -271,13 +271,13 @@ Object *Object_copy(Object *self);
 IO *IO_new(void);
 void IO_init(IO *self);
 IO *IO_out_string(IO *self, String *x);
-IO *IO_out_int(IO *self, Int *x);
+IO *IO_out_int(IO *self, int x);
 String *IO_in_string(IO *self);
-Int *IO_in_int(IO *self);
+int IO_in_int(IO *self);
 
 /* methods in class Int */
 Int *Int_new(void);
-void Int_init(Int *self, int32_t val);
+void Int_init(Int *self, int val);
 
 /* methods in class Bool */
 Bool *Bool_new(void);
@@ -285,6 +285,6 @@ void Bool_init(Bool *self, bool val);
 
 /* methods in class String */
 String *String_new(void);
-int32_t String_length(String *self);
+int String_length(String *self);
 String *String_concat(String *self, String *s);
-String *String_substr(String *self, int32_t i, int32_t l);
+String *String_substr(String *self, int i, int l);

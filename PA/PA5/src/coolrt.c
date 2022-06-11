@@ -19,11 +19,64 @@ const char IO_string[] = "IO";
 const char default_string[] = "";
 
 /* Class vtable prototypes */
-const Object_vtable Object_vtable_prototype = {
-    /* ADD CODE HERE */
+const Object_vtable Object_vtable_prototype_ = {
+    0,
+    sizeof(Object_vtable),
+    Object_string,
+    &Object_new,
+    &Object_abort,
+    &Object_type_name,
+    &Object_copy,
 };
 
 /* ADD CODE HERE FOR MORE VTABLE PROTOTYPES */
+
+const Int_vtable Int_vtable_prototype_ = {
+    1,
+    sizeof(Int_vtable),
+    Int_string,
+    &Int_new,
+    (Object * (*)(Int *))(&Object_abort),
+    (String * (*)(Int *))(&Object_type_name),
+    (Int * (*)(Int *))(&Object_copy),
+};
+
+const Bool_vtable Bool_vtable_prototype_ = {
+    2,
+    sizeof(Bool_vtable),
+    Bool_string,
+    &Bool_new,
+    (Object * (*)(Bool *))(&Object_abort),
+    (String * (*)(Bool *))(&Object_type_name),
+    (Bool * (*)(Bool *))(&Object_copy),
+};
+
+const String_vtable String_vtable_prototype_ = {
+    3,
+    sizeof(String_vtable),
+    String_string,
+    &String_new,
+    (Object * (*)(String *))(&Object_abort),
+    (String * (*)(String *))(&Object_type_name),
+    (String * (*)(String *))(&Object_copy),
+    (int (*)(String *))(&String_length),
+    (String * (*)(String *, String *))(&String_concat),
+    (String * (*)(String *, int, int))(&String_substr),
+};
+
+const IO_vtable IO_vtable_prototype_ = {
+    4,
+    sizeof(IO_vtable),
+    IO_string,
+    &IO_new,
+    (Object * (*)(IO *))(&Object_abort),
+    (String * (*)(IO *))(&Object_type_name),
+    (IO * (*)(IO *))(&Object_copy),
+    (IO * (*)(IO *, String *))(&IO_out_string),
+    (IO * (*)(IO *, int))(&IO_out_int),
+    (String * (*)(IO *))(&IO_in_string),
+    (int (*)(IO *))(&IO_in_int),
+};
 
 /*
 // Methods in class object (only some are provided to you)
@@ -50,16 +103,20 @@ const String *Object_type_name(Object *self)
 
 Object *Object_new(void)
 {
-    return malloc(sizeof(Object));
+    Object *obj = malloc(sizeof(Object));
+
+    obj->vtblptr = &Object_vtable_prototype_;
+
+    return obj;
 }
 
 Object *Object_copy(Object *self)
 {
-    Object *object = Object_new();
+    void *obj = malloc(self->vtblptr->size);
 
-    memcpy(object->vtblptr, self->vtblptr, sizeof(Object_vtable));
+    memcpy(obj, self, self->vtblptr->size);
 
-    return object;
+    return obj;
 }
 
 /*
@@ -77,14 +134,14 @@ IO *IO_out_string(IO *self, String *x)
     return self;
 }
 
-IO *IO_out_int(IO *self, Int *x)
+IO *IO_out_int(IO *self, int x)
 {
     if (self == 0 || x == 0)
     {
         fprintf(stderr, "At __FILE__(line __LINE__): NULL object\n");
         abort();
     }
-    printf("%d", x->val);
+    printf("%d", x);
     return self;
 }
 
@@ -145,7 +202,7 @@ String *IO_in_string(IO *self)
  * Any characters following the integer, up to and including the next newline,
  * are discarded by in_int.
  */
-Int *IO_in_int(IO *self)
+int IO_in_int(IO *self)
 {
     if (self == 0)
     {
@@ -159,10 +216,10 @@ Int *IO_in_int(IO *self)
     assert(in_string);
 
     /* Now extract initial int and ignore the rest of the line */
-    Int *x = Int_new();
+    int x;
     int num_ints = 0;
     if (len)
-        num_ints = sscanf(in_string, " %d", &(x->val)); /* Discards initial spaces*/
+        num_ints = sscanf(in_string, " %d", &x); /* Discards initial spaces*/
 
     /* If no text found, abort. */
     if (num_ints == 0)
@@ -176,17 +233,26 @@ Int *IO_in_int(IO *self)
 
 IO *IO_new(void)
 {
-    return malloc(sizeof(IO));
+    IO *obj = malloc(sizeof(IO));
+
+    obj->vtblptr = &IO_vtable_prototype_;
+
+    return obj;
 }
 
 /* methods in class Int */
 
 Int *Int_new(void)
 {
-    return malloc(sizeof(Int));
+    Int *obj = malloc(sizeof(Int));
+
+    obj->vtblptr = &Int_vtable_prototype_;
+    obj->val = 0;
+
+    return obj;
 }
 
-void Int_init(Int *self, int32_t val)
+void Int_init(Int *self, int val)
 {
     self->val = val;
 }
@@ -195,7 +261,12 @@ void Int_init(Int *self, int32_t val)
 
 Bool *Bool_new(void)
 {
-    return malloc(sizeof(Bool));
+    Bool *obj = malloc(sizeof(Bool));
+
+    obj->vtblptr = &Bool_vtable_prototype_;
+    obj->val = false;
+
+    return obj;
 }
 
 void Bool_init(Bool *self, bool val)
@@ -207,10 +278,15 @@ void Bool_init(Bool *self, bool val)
 
 String *String_new(void)
 {
-    return malloc(sizeof(String));
+    String *obj = malloc(sizeof(String));
+
+    obj->vtblptr = &String_vtable_prototype_;
+    obj->val = "";
+
+    return obj;
 }
 
-int32_t String_length(String *self)
+int String_length(String *self)
 {
     return strlen(self->val);
 }
@@ -218,34 +294,29 @@ int32_t String_length(String *self)
 String *String_concat(String *self, String *s)
 {
     String *result = String_new();
-    char *val = malloc((String_length(self) + String_length(s) + 1) * sizeof(int8_t));
+    result->val = malloc((String_length(self) + String_length(s) + 1) * sizeof(int8_t));
 
-    val = "";
-
-    strcat(val, self->val);
-    strcat(val, s->val);
-
-    result->val = val;
-    result->vtblptr = self->vtblptr;
+    strcat(result->val, self->val);
+    strcat(result->val, s->val);
 
     return result;
 }
 
-String *String_substr(String *self, int32_t i, int32_t l)
+String *String_substr(String *self, int i, int l)
 {
     if (String_length(self) < (i + l))
     {
-        error("Index out of range");
+        fprintf(stderr, "At __FILE__(line __LINE__):\n   ");
+        fprintf(stderr, "    Out of range in String::substr()");
+        abort();
     }
 
     String *result = String_new();
-    char *val = malloc((l + 1) * sizeof(int8_t));
 
-    strncpy(val, &self->val[i], l);
-    val[l] = '\0';
+    result->val = malloc((l + 1) * sizeof(int8_t));
 
-    result->val = val;
-    result->vtblptr = self->vtblptr;
+    strncpy(result->val, &self->val[i], l);
+    result->val[l] = '\0';
 
     return result;
 }
