@@ -280,6 +280,7 @@ public:
     void enterscope() { this->var_table.enterscope(); }
     void exitscope() { this->var_table.exitscope(); }
     void addid(Symbol s, operand *i) { this->var_table.addid(s, i); }
+    CgenNode *lookup_class_by_op_type(op_type t);
 };
 
 // Utitlity function

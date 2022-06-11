@@ -209,7 +209,7 @@ void CgenClassTable::setup_external_functions()
     op_type objectptr_type{"Object*"}, stringptr_type{"String*"}, ioptr_type{"IO*"}, int32_t_type{INT32}, int32_tptr_type{INT32_PTR}, int_type{"Int"}, intptr_type{"Int*"}, boolptr_type{"Bool*"}, i1_type{INT1};
 
     // setup function: external Object* Object_new (void);
-    vector<op_type> object_new_args{void_type};
+    vector<op_type> object_new_args{};
     vp.declare(*ct_stream, objectptr_type, "Object_new", object_new_args);
 
     // setup function: external Object* Object_abort (Object*);
@@ -225,7 +225,7 @@ void CgenClassTable::setup_external_functions()
     vp.declare(*ct_stream, objectptr_type, "Object_copy", object_copy_args);
 
     // setup function: external IO* IO_new (void);
-    vector<op_type> io_new_args{void_type};
+    vector<op_type> io_new_args{};
     vp.declare(*ct_stream, ioptr_type, "IO_new", io_new_args);
 
     // setup function: external IO* IO_out_string (IO*, String*);
@@ -233,7 +233,7 @@ void CgenClassTable::setup_external_functions()
     vp.declare(*ct_stream, ioptr_type, "IO_out_string", io_out_string_args);
 
     // setup function: external IO* IO_out_int (IO*, int32_t*);
-    vector<op_type> io_out_int_args{ioptr_type, int32_tptr_type};
+    vector<op_type> io_out_int_args{ioptr_type, int32_t_type};
     vp.declare(*ct_stream, ioptr_type, "IO_out_int", io_out_int_args);
 
     // setup function: external String* IO_in_string (IO*);
@@ -242,10 +242,10 @@ void CgenClassTable::setup_external_functions()
 
     // setup function: external int32_t* IO_in_int (IO*);
     vector<op_type> io_in_int_args{ioptr_type};
-    vp.declare(*ct_stream, int32_tptr_type, "IO_in_int", io_in_int_args);
+    vp.declare(*ct_stream, int32_t_type, "IO_in_int", io_in_int_args);
 
     // setup function: external String* String_new (void);
-    vector<op_type> string_new_args{void_type};
+    vector<op_type> string_new_args{};
     vp.declare(*ct_stream, stringptr_type, "String_new", string_new_args);
 
     // setup function: external int32_t  String_length (String*);
@@ -261,7 +261,7 @@ void CgenClassTable::setup_external_functions()
     vp.declare(*ct_stream, stringptr_type, "String_substr", string_substr_args);
 
     // setup function: external Int* Int_new (void);
-    vector<op_type> int_new_args{void_type};
+    vector<op_type> int_new_args{};
     vp.declare(*ct_stream, intptr_type, "Int_new", int_new_args);
 
     // setup function :external void Int_init (Int*, int32_t);
@@ -269,7 +269,7 @@ void CgenClassTable::setup_external_functions()
     vp.declare(*ct_stream, void_type, "Int_init", int_init_args);
 
     // setup function: external Bool* Bool_new (void);
-    vector<op_type> bool_new_args{void_type};
+    vector<op_type> bool_new_args{};
     vp.declare(*ct_stream, boolptr_type, "Bool_new", bool_new_args);
 
     // setup function: external void Bool_init (Bool*, i1);
@@ -578,7 +578,7 @@ void StringEntry::code_def(ostream &s, CgenClassTable *ct)
         const_value{internal_name_type, "@" + internal_name, true},
     };
 
-    vp.init_constant(this->get_llvm_constant_name(true), const_value{op_arr_type{INT8, (int)string(this->get_string()).length() + 1}, this->get_string(), true});
+    vp.init_constant(this->get_llvm_constant_name(true), const_value{op_arr_type{INT8, (int)string(this->get_string()).length() + 1}, string(this->get_string()), true});
     vp.init_struct_constant(global_value{op_type{"String"}, name}, field_types, init_values);
 #endif
 }
@@ -760,9 +760,13 @@ void CgenClassTable::code_main()
 
         vp.call(*this->ct_stream, main_new_args_t, "Main_new", true, main_new_args_v, main_new_result_op);
 
-        vector<op_type> main_main_args_t;
-        vector<operand> main_main_args_v;
-        op_type main_main_retn_type{this->lookup(Main)->get_method_info_by_llvm_name("Main_main").llvm_ret_type.get_name().substr(1) + "(%Main*)"};
+        operand main_self{main_new_result_op};
+        main_self.set_type(op_type("Main*"));
+
+        vector<op_type> main_main_args_t{op_type("Main*")};
+        vector<operand> main_main_args_v{main_self};
+
+        op_type main_main_retn_type{this->lookup(Main)->get_method_info_by_llvm_name("Main_main").llvm_ret_type};
         operand main_main_result_op{main_main_retn_type, "main.retval"};
 
         vp.call(*this->ct_stream, main_main_args_t, "Main_main", true, main_main_args_v, main_main_result_op);
@@ -811,7 +815,6 @@ op_type symbol_to_op_type(Symbol type_decl, CgenNode *cls)
     {
         result = op_type{type_decl->get_string(), 1};
     }
-
     return result;
 }
 
@@ -905,7 +908,7 @@ void CgenNode::setup(int tag, int depth)
         {
             op_type evaluated_self_type = (method.is_ret_self_type) ? op_type{method.def_class_name, 1} : op_type{method.llvm_ret_type};
 
-            method.llvm_args_types.at(0) = evaluated_self_type;
+            method.llvm_args_types.at(0) = op_type{method.def_class_name, 1};
 
             vtable_init_values.push_back(casted_value{ret_type, "@" + method.llvm_mangled_name, op_func_type{evaluated_self_type, method.llvm_args_types}});
         }
@@ -916,7 +919,7 @@ void CgenNode::setup(int tag, int depth)
         class_fields.push_back(attr.llvm_type);
     }
 
-    vp.init_constant(node_name, const_value{i8ptr_type, this->get_type_name(), true});
+    vp.init_constant(node_name, const_value{op_arr_type{INT8, (int)string(this->get_type_name()).length() + 1}, string(this->get_type_name()), true});
 
     vp.type_define(this->get_type_name(), class_fields);
 
@@ -995,7 +998,7 @@ void CgenNode::code_class()
             vp.getelementptr(o, main_type, v_main_ptr, int_value{0}, int_value{0}, v_main);
 
             //
-            env->addid(self, new operand{op_type{this->get_type_name(), 1}, env->new_name()});
+            env->addid(self, &v_main_ptr);
 
             //
             vp.store(vtable_global, v_main);
@@ -1040,6 +1043,18 @@ void CgenNode::layout_features()
 
         this->methods_offset = this->parentnd->methods_offset;
         this->methods_layout = this->parentnd->methods_layout;
+    }
+
+    for (std::pair<Entry *const, CgenNode::method_info> &pair : this->methods_layout)
+    {
+        method_info &method = pair.second;
+        op_type self{this->get_type_name(), 1};
+
+        if (method.is_ret_self_type)
+        {
+            method.llvm_ret_type = op_type{self};
+        }
+        method.llvm_args_types[0] = op_type{self};
     }
 
     for (int i = this->features->first(); this->features->more(i); i = this->features->next(i))
@@ -1166,6 +1181,29 @@ void CgenEnvironment::add_local(Symbol name, operand &vb)
 void CgenEnvironment::kill_local()
 {
     var_table.exitscope();
+}
+
+CgenNode *CgenEnvironment::lookup_class_by_op_type(op_type t)
+{
+    op_type_id id = t.get_id();
+
+    Symbol s;
+
+    if (id == INT1)
+    {
+        s = Bool;
+    }
+    else if (id == INT32)
+    {
+        s = Int;
+    }
+    else if (id == OBJ_PTR)
+    {
+        string str = t.get_name();
+        s = idtable.lookup_string(strdup(str.substr(1, str.length() - 2).c_str()));
+    }
+
+    return this->type_to_class(s);
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1625,6 +1663,14 @@ operand object_class::code(CgenEnvironment *env)
         operand *base_ptr{env->lookup(self)};
         operand base{base_ptr->get_type().get_deref_type(), env->new_name()};
         vp.load(o, base.get_type(), *base_ptr, base);
+
+        CgenNode::attribute_info attr = env->get_class()->get_attribute_info_by_symbol(this->name);
+
+        operand obj_ptr{attr.llvm_type.get_ptr_type(), env->new_name()};
+        vp.getelementptr(o, base.get_type().get_deref_type(), base, int_value{0}, int_value{attr.offset + 1}, obj_ptr);
+
+        retstr = operand{obj_ptr.get_type().get_deref_type(), env->new_name()};
+        vp.load(o, retstr.get_type(), obj_ptr, retstr);
     }
 
     return retstr;
@@ -1674,8 +1720,73 @@ operand dispatch_class::code(CgenEnvironment *env)
 #ifndef PA5
     assert(0 && "Unsupported case for phase 1");
 #else
-        // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-        // MORE MEANINGFUL
+    ostream &o = *(env->cur_stream);
+    ValuePrinter vp{o};
+
+    string ok_label = env->new_ok_label();
+
+    vector<operand> actual_ops{};
+
+    for (int i = this->actual->first(); this->actual->more(i); i = this->actual->next(i))
+    {
+        Expression f = this->actual->nth(i);
+        actual_ops.push_back(f->code(env));
+    }
+
+    operand self_op{this->expr->code(env)};
+
+    op_type self_type{self_op.get_type()};
+
+    if (self_type.get_id() == INT32)
+    {
+        self_op = conform(self_op, op_type{"Int", 1}, env);
+    }
+    else if (self_type.get_id() == INT1)
+    {
+        self_op = conform(self_op, op_type{"Bool", 1}, env);
+    }
+    else
+    {
+        operand void_op = null_value{self_type};
+        operand check_res{op_type{INT1}, env->new_name()};
+
+        vp.icmp(o, EQ, self_op, void_op, check_res);
+        vp.branch_cond(check_res, "abort", ok_label);
+
+        vp.begin_block(ok_label);
+    }
+
+    actual_ops.insert(actual_ops.begin(), self_op);
+
+    CgenNode *cls = env->lookup_class_by_op_type(self_op.get_type());
+
+    op_type self_vtable_type{cls->get_vtable_type_name()};
+    operand vtable_pptr{self_vtable_type.get_ptr_type().get_ptr_type(), env->new_name()};
+
+    vp.getelementptr(o, self_type.get_deref_type(), self_op, int_value{0}, int_value{0}, vtable_pptr);
+
+    operand vtable_ptr{self_vtable_type.get_ptr_type(), env->new_name()};
+
+    vp.load(o, self_vtable_type.get_ptr_type(), vtable_pptr, vtable_ptr);
+
+    CgenNode::method_info method = cls->get_method_info_by_symbol(this->name);
+
+    op_func_ptr_type func_ptr_type{method.llvm_ret_type, method.llvm_args_types};
+    operand func_ptr_tmp{func_ptr_type, env->new_name()};
+
+    vp.getelementptr(o, self_vtable_type, vtable_ptr, int_value{0}, int_value{method.offset + 4}, func_ptr_tmp);
+
+    operand func{func_ptr_type.get_deref_type(), env->new_name()};
+    vp.load(o, func_ptr_type.get_deref_type(), func_ptr_tmp, func);
+
+    for (int i = 0; i < actual_ops.size(); i++)
+    {
+        actual_ops.at(i) = conform(actual_ops.at(i), method.llvm_args_types.at(i), env);
+    }
+
+    operand ret{method.llvm_ret_type, env->new_name()};
+    vp.call(o, method.llvm_args_types, func.get_name().substr(1), false, actual_ops, ret);
+
 #endif
     return operand();
 }
