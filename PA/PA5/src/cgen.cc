@@ -1020,7 +1020,7 @@ void CgenNode::code_class()
             vp.ret(v_main_ptr);
 
             vp.begin_block("abort");
-            vp.call(vector<op_type>{}, VOID, "abort", true, vector<operand>{});
+            vp.call(o, vector<op_type>{}, "abort", true, vector<operand>{}, operand{VOID, ""});
             vp.unreachable();
         }
         vp.end_define();
@@ -1035,6 +1035,8 @@ void CgenNode::code_class()
 // and assigning each attribute a slot in the class structure.
 void CgenNode::layout_features()
 {
+    op_type self{this->get_type_name(), 1};
+
     if (this->parentnd)
     {
         this->attributes_offset = this->parentnd->attributes_offset;
@@ -1047,13 +1049,21 @@ void CgenNode::layout_features()
     for (std::pair<Entry *const, CgenNode::method_info> &pair : this->methods_layout)
     {
         method_info &method = pair.second;
-        op_type self{this->get_type_name(), 1};
 
         if (method.is_ret_self_type)
         {
             method.llvm_ret_type = op_type{self};
         }
         method.llvm_args_types[0] = op_type{self};
+    }
+
+    for (std::pair<Entry *const, CgenNode::attribute_info> &pair : this->attributes_layout)
+    {
+        attribute_info &attr = pair.second;
+        if (attr.is_self_type)
+        {
+            attr.llvm_type = op_type{self};
+        }
     }
 
     for (int i = this->features->first(); this->features->more(i); i = this->features->next(i))
@@ -1268,7 +1278,7 @@ operand conform(operand src, op_type type, CgenEnvironment *env)
             }
 
             vp.getelementptr(o, src_type.get_deref_type(), src, int_value{0}, int_value{1}, tmp_op);
-            vp.load(o, tmp_op.get_type(), tmp_op, res_op);
+            vp.load(o, res_op.get_type(), tmp_op, res_op);
         }
         else
         {
@@ -1414,7 +1424,7 @@ void method_class::code(CgenEnvironment *env)
             vp.ret(result);
 
             vp.begin_block("abort");
-            vp.call(vector<op_type>{}, VOID, "abort", true, vector<operand>{});
+            vp.call(o, vector<op_type>{}, "abort", true, vector<operand>{}, operand{VOID, ""});
             vp.unreachable();
         }
         vp.end_define();
@@ -1471,9 +1481,9 @@ operand cond_class::code(CgenEnvironment *env)
         std::cerr << "cond" << endl;
     ValuePrinter vp{*(env->cur_stream)};
 
-    string branch_then_label = env->new_label("cond.then.", 0);
-    string branch_else_label = env->new_label("cond.else.", 0);
-    string branch_done_label = env->new_label("cond.done.", 1);
+    string branch_then_label = env->new_label("true.", 0);
+    string branch_else_label = env->new_label("false.", 0);
+    string branch_done_label = env->new_label("end.", 1);
 
     op_type result_type = symbol_to_op_type(this->get_type(), env->get_class());
 
@@ -1514,9 +1524,9 @@ operand loop_class::code(CgenEnvironment *env)
         std::cerr << "loop" << endl;
     ValuePrinter vp{*(env->cur_stream)};
 
-    string branch_cond_label = env->new_label("loop.cond.", 0);
-    string branch_body_label = env->new_label("loop.body.", 0);
-    string branch_done_label = env->new_label("loop.done.", 1);
+    string branch_cond_label = env->new_label("loop.", 0);
+    string branch_body_label = env->new_label("true.", 0);
+    string branch_done_label = env->new_label("false.", 1);
 
     vp.branch_uncond(branch_cond_label);
 
@@ -1666,9 +1676,9 @@ operand divide_class::code(CgenEnvironment *env)
     ostream &o = *(env->cur_stream);
     ValuePrinter vp{*(env->cur_stream)};
 
-    string branch_ok_label = env->new_ok_label();
     operand e1_code = this->e1->code(env);
     operand e2_code = this->e2->code(env);
+    string branch_ok_label = env->new_ok_label();
     operand icmp_result{op_type{INT1}, env->new_name()};
     operand result{op_type{INT32}, env->new_name()};
 
@@ -1861,8 +1871,69 @@ operand static_dispatch_class::code(CgenEnvironment *env)
 #ifndef PA5
     assert(0 && "Unsupported case for phase 1");
 #else
-        // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-        // MORE MEANINGFUL
+    ostream &o = *(env->cur_stream);
+    ValuePrinter vp{o};
+
+    string ok_label = env->new_ok_label();
+
+    vector<operand> actual_ops{};
+
+    for (int i = this->actual->first(); this->actual->more(i); i = this->actual->next(i))
+    {
+        Expression f = this->actual->nth(i);
+        actual_ops.push_back(f->code(env));
+    }
+    operand self_op{this->expr->code(env)};
+
+    op_type self_type{self_op.get_type()};
+
+    if (self_type.get_id() == INT32)
+    {
+        self_op = conform(self_op, op_type{"Int", 1}, env);
+        self_type = self_op.get_type();
+    }
+    else if (self_type.get_id() == INT1)
+    {
+        self_op = conform(self_op, op_type{"Bool", 1}, env);
+        self_type = self_op.get_type();
+    }
+    else
+    {
+        operand void_op = null_value{self_type};
+        operand check_res{op_type{INT1}, env->new_name()};
+
+        vp.icmp(o, EQ, self_op, void_op, check_res);
+        vp.branch_cond(check_res, "abort", ok_label);
+
+        vp.begin_block(ok_label);
+    }
+
+    actual_ops.insert(actual_ops.begin(), self_op);
+
+    CgenNode *cls = env->type_to_class(this->type_name);
+
+    op_type self_vtable_type{cls->get_vtable_type_name()};
+
+    CgenNode::method_info method = cls->get_method_info_by_symbol(this->name);
+
+    op_func_ptr_type func_ptr_type{method.llvm_ret_type, method.llvm_args_types};
+    operand func_ptr_tmp{func_ptr_type, env->new_name()};
+
+    vp.getelementptr(o, self_vtable_type, global_value{self_vtable_type, cls->get_vtable_name()}, int_value{0}, int_value{method.offset + 4}, func_ptr_tmp);
+
+    operand func{func_ptr_type.get_deref_type(), env->new_name()};
+    vp.load(o, func_ptr_type.get_deref_type(), func_ptr_tmp, func);
+
+    for (int i = 0; i < actual_ops.size(); i++)
+    {
+        actual_ops.at(i) = conform(actual_ops.at(i), method.llvm_args_types.at(i), env);
+    }
+
+    operand ret{method.llvm_ret_type, env->new_name()};
+    vp.call(o, method.llvm_args_types, func.get_name().substr(1), false, actual_ops, ret);
+
+    return ret;
+
 #endif
     return operand();
 }
@@ -2018,7 +2089,6 @@ operand typcase_class::code(CgenEnvironment *env)
                 vp.branch_uncond(case_label);
                 vp.begin_block(case_label);
                 operand result = c->code(expr_val, tag, join_type, env);
-                env->next_label = case_label;
             }
         }
     }
@@ -2026,9 +2096,10 @@ operand typcase_class::code(CgenEnvironment *env)
     vp.branch_uncond("abort");
 
     vp.begin_block(exit_label);
-
     operand result{alloca_op.get_type().get_deref_type(), env->new_name()};
-    vp.load(o, alloca_op.get_type().get_deref_type(), alloca_op, result);
+    vp.load(o, result.get_type(), alloca_op, result);
+
+    env->new_label("", 1);
 
     return result;
 #endif
@@ -2092,8 +2163,24 @@ operand isvoid_class::code(CgenEnvironment *env)
 #ifndef PA5
     assert(0 && "Unsupported case for phase 1");
 #else
-        // ADD CODE HERE AND REPLACE "return operand()" WITH SOMETHING
-        // MORE MEANINGFUL
+    ostream &o = *(env->cur_stream);
+    ValuePrinter vp{o};
+
+    operand result;
+    operand e1_op = this->e1->code(env);
+    Symbol e1_type = this->e1->get_type();
+
+    if (e1_type == Int || e1_type == Bool || e1_type == String)
+    {
+        result = bool_value{false, true};
+    }
+    else
+    {
+        result = operand{op_type{INT1}, env->new_name()};
+        vp.icmp(o, EQ, e1_op, null_value{e1_op.get_type()}, result);
+    }
+
+    return result;
 #endif
     return operand();
 }
@@ -2140,14 +2227,14 @@ operand branch_class::code(operand expr_val, operand tag,
     vp.branch_cond(icmp_result, br_exit_label, src_gte_br_label);
 
     vp.begin_block(src_gte_br_label);
-    icmp_result = vp.icmp(GT, tag, int_value{tag_num});
+    icmp_result = vp.icmp(GT, tag, int_value{max_child});
     vp.branch_cond(icmp_result, br_exit_label, src_lte_mc_label);
 
     vp.begin_block(src_lte_mc_label);
 
     operand alloca_op = vp.alloca_mem(op_type{cls->get_type_name(), 1});
 
-    vp.store(o, conform(expr_val, join_type.get_ptr_type(), env), alloca_op);
+    vp.store(o, conform(expr_val, alloca_op.get_type().get_deref_type(), env), alloca_op);
 
     env->add_local(this->name, alloca_op);
 
