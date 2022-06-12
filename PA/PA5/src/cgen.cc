@@ -11,7 +11,7 @@
 #include <sstream>
 #include <algorithm>
 
-#define VERBOSE
+// #define VERBOSE
 
 #define RED 31
 #define GREEN 32
