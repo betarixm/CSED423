@@ -2044,10 +2044,10 @@ operand typcase_class::code(CgenEnvironment *env)
 
     operand expr_val = this->expr->code(env);
 
-    if (expr_val.get_typename() != "%Int*" && expr_val.get_typename() != "%Bool*")
+    if (expr_val.get_type().is_ptr() && (!expr_val.get_type().is_int_object()) && (!expr_val.get_type().is_bool_object()))
     {
         operand icmp_result_op{op_type{INT1}, env->new_name()};
-        vp.icmp(o, EQ, expr_val, null_value{op_type{EMPTY}}, icmp_result_op);
+        vp.icmp(o, EQ, expr_val, null_value{op_type{}}, icmp_result_op);
 
         string ok_label = env->new_ok_label();
 
