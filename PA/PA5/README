@@ -1,0 +1,112 @@
+README file for Programming Assignment 4 and 5
+===========================================================
+
+
+------------------------------------------------------------
+Information about the differences between PA4 and PA5
+------------------------------------------------------------
+
+PA4:
+  This is Phase 1.  In this phase, you will translate
+  a subset of COOL that only includes a single class (Main) with a single
+  method (Main.main) and no attributes.  You will ignore most object-related
+  language features including case, new, dispatch, static dispatch, isvoid,
+  object, and strings.
+
+PA5:
+  This is Phase 2, and it requires you to finish the translator to support all
+  the remaining features of COOL.
+
+Conditional Compilation
+-----------------------
+
+In the primary source files, cgen.cc and cgen.h, you will see some conditional
+compilation using the following directives:
+   #ifndef PA5 ... #endif
+or
+   #ifdef  PA5 ... #endif
+These directives enclose code that is only required in Phase 1 or only
+required in Phase 2, respectively.  In PA4, you should not have to write
+any code that is enclosed in #ifdef PA5  ... #endif.
+In PA5, you should be able to ignore the former but will have to
+add the latter.
+
+The Makefile in src is set up so that you can compile phase 1 by
+saying 'make cgen-1' and phase 2 by saying 'make cgen-2'.  The symbol
+PA5 is defined on the command line in the second case but not the
+first.
+
+
+------------------------------------------------------------
+Common information for both PA4 and PA5
+------------------------------------------------------------
+
+
+ cgen.cc
+        cgen.cc is the skeleton file for the code generator. 
+
+        Code generation proceeds roughly as follows:
+
+        - The compiler driver calls program_class::cgen(ostream &os)
+        - program_class::cgen creates a new CgenClassTable
+        - CgenClassTable constructor does all code generation for the program 
+          Code generation involves the following tasks:
+
+          - create the class tree from the class list
+
+          - perform a first setup pass on all the nodes in the tree which
+            includes laying out the features of the class
+
+          - create global constants
+          
+          - perform a codegen pass on all the nodes in the tree
+            - emit code for each method in the class
+              - emit code for expressions using the code(CgenEnvironment *)
+                virtual function defined by every Expression.
+              - CgenEnvironment maintains global information such as the
+                symbol table, and must be passed from expression
+                to expression.  A new CgenEnvironment should be created for
+                each method that is code-generated.
+
+        This is an approximate description of what should happen in your
+        compiler and the order in which it will occur.  Of course, you will 
+        need to add some of your own functions and data members to accomplish 
+        these tasks - filling in the details is your job.
+
+ cgen.h
+        cgen.h is the header file for the code generator. Feel free to
+        add anything you need.  It contains the declarations of the
+        class CgenClassTable and CgenNode, including what's needed to
+        create the tree of CgenNode's representing the class hierarchy.
+
+ cool-tree.handcode.h
+        cool-tree.handcode.h contains
+        the declarations and definitions of code generation AST nodes.
+        You may modify these as you wish, but be sure to do "make clean"
+        after doing so.  Place all method definitions in cgen.cc
+
+ coolrt.c
+        Cool runtime implemented in C. Modify to match your generated
+        code (PA5 only).
+
+ coolrt.h
+        Cool runtime type declarations. Modify to match your generated
+        code (PA5 only).
+
+ from the support code cgen-phase.cc:
+        cgen-phase.cc supplies the driver for the compiler. You should
+        not modify this code. 
+
+ cgen flags
+        The final compiled and linked code generator is called cgen.
+        This program will accept several command-line flags.  For this
+        assignment, -c (code generator debug) may be useful as it sets a global
+        variable cgen_debug to true (1).  If you want your code
+        generator to print debug information when the option is set,
+        write your debug code in the following format:
+
+              if (cgen_debug)
+              {
+                ...
+              }
+

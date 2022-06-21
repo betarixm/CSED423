@@ -1,0 +1,3 @@
+This is a place for you to put test .cl files for Phase 1.  The
+Makefile is set up so that you can compile .cl files through your code
+generator (cgen-1) to generate executable code.
