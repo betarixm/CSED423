@@ -71,6 +71,11 @@ def compare(filepath: str):
 
 
 if __name__ == "__main__":
+    if (len(sys.argv) != 2):
+        print(f"Usage: python3 {__file__} <Unix style pathname pattern>")
+        print(f"Example: python3 {__file__} testcases/*.cl")
+        exit()
+
     build()
 
     for filename in list(
