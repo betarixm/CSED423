@@ -57,7 +57,6 @@ def run(runner_path: str, abs_path: str):
 
 
 def compare(filepath: str):
-
     out, _ = run(LEXER_PATH, generate_abspath(filepath))
     ref_out, _ = run(REF_LEXER_PATH, generate_abspath(filepath))
 
@@ -73,9 +72,7 @@ def compare(filepath: str):
 if __name__ == "__main__":
     build()
 
-    for filename in list(
-        glob.glob(sys.argv[1])
-    ):
+    for filename in glob.glob(sys.argv[1])):
         print(f"[*] {filename.split('/')[-1]}")
         compare(filename)
         print()
